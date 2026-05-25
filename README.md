@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://socialify.git.ci/anomalyco/redditradar/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Solid&theme=Dark" />
-  <img alt="RedditRadar" src="https://socialify.git.ci/anomalyco/redditradar/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Solid&theme=Light" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://socialify.git.ci/devravik/RedditRadar/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Solid&theme=Dark" />
+  <img alt="RedditRadar" src="https://socialify.git.ci/devravik/RedditRadar/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Solid&theme=Light" />
 </picture>
 
 **RedditRadar** is an open-source lead discovery tool for engineers. It monitors subreddits, fetches posts, analyzes them with AI against your custom engineer profile, and helps you track and reach out to promising opportunities — all from a self-hosted dashboard.
@@ -34,7 +34,7 @@ Built with [Next.js](https://nextjs.org) 16, [Prisma](https://prisma.io) 7, Post
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/anomalyco/redditradar.git
+git clone https://github.com/devravik/RedditRadar.git
 cd redditradar
 npm install
 ```
