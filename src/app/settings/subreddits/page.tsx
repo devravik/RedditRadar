@@ -5,6 +5,7 @@ import { IntervalSelect } from '@/components/interval-select'
 import { AddSubredditForm } from '@/components/add-subreddit-form'
 import { DeleteSubredditButton } from '@/components/delete-subreddit-button'
 import { CsvImportButton } from '@/components/csv-import-button'
+import { FetchSubredditButton } from '@/components/fetch-subreddit-button'
 
 function formatRelative(date: Date): string {
   const diff = Date.now() - date.getTime()
@@ -50,6 +51,8 @@ export default async function SubredditsSettingsPage() {
                 </td>
                 <td className="px-4 py-3 text-gray-400 text-xs">
                   {sub.lastFetchedAt ? formatRelative(sub.lastFetchedAt) : 'never'}
+                  &nbsp;
+                  <FetchSubredditButton name={sub.name} />
                 </td>
                 <td className="px-4 py-3 text-right">
                   <DeleteSubredditButton id={sub.id} name={sub.name} />

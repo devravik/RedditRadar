@@ -36,27 +36,21 @@ export async function POST(_req: NextRequest) {
     try {
       const result = await analyzePost(post.title, post.body, engineerProfile, aiProvider, aiModel)
       console.log(`[analyze] → score ${result.matchScore} — ${result.summary}`)
+
+      const data = {
+        technologies: (result.technologies ?? []).filter(Boolean),
+        painPoints: (result.painPoints ?? []).filter(Boolean),
+        seniority: String(result.seniority ?? 'unknown'),
+        remote: result.remote === true || String(result.remote) === 'true',
+        startupStage: String(result.startupStage ?? 'unknown'),
+        matchScore: Number(result.matchScore) || 0,
+        summary: String(result.summary ?? ''),
+      }
+
       await prisma.extractedSignal.upsert({
         where: { postId: post.id },
-        create: {
-          post: { connect: { id: post.id } },
-          technologies: result.technologies,
-          painPoints: result.painPoints,
-          seniority: result.seniority,
-          remote: result.remote,
-          startupStage: result.startupStage,
-          matchScore: result.matchScore,
-          summary: result.summary,
-        },
-        update: {
-          technologies: result.technologies,
-          painPoints: result.painPoints,
-          seniority: result.seniority,
-          remote: result.remote,
-          startupStage: result.startupStage,
-          matchScore: result.matchScore,
-          summary: result.summary,
-        },
+        create: { post: { connect: { id: post.id } }, ...data },
+        update: data,
       })
 
       if (result.matchScore >= leadThreshold) {
