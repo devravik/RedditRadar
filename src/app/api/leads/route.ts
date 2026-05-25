@@ -5,7 +5,6 @@ export async function GET(_req: NextRequest) {
   const leads = await prisma.lead.findMany({
     include: {
       post: {
-        select: { title: true, subreddit: true, url: true, author: true },
         include: { signal: { select: { matchScore: true, technologies: true, painPoints: true, summary: true } } },
       },
       messages: { select: { id: true, type: true, createdAt: true } },

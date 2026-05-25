@@ -10,8 +10,9 @@ async function getLeads(status?: string) {
     where: status ? { status: status as LeadStatus } : undefined,
     include: {
       post: {
-        select: { title: true, subreddit: true, url: true, author: true, postedAt: true },
-        include: { signal: { select: { matchScore: true, technologies: true, painPoints: true, summary: true } } },
+        include: {
+          signal: { select: { matchScore: true, technologies: true, painPoints: true, summary: true } },
+        },
       },
       messages: { select: { id: true } },
     },

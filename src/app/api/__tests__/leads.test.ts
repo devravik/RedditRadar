@@ -80,7 +80,7 @@ describe('PATCH /api/leads/[id]', () => {
       body: JSON.stringify({ status: 'CONTACTED', notes: 'Sent DM' }),
       headers: { 'Content-Type': 'application/json' },
     })
-    const res = await PATCH(req, { params: { id: 'lead1' } })
+    const res = await PATCH(req, { params: Promise.resolve({ id: 'lead1' }) })
     const body = await res.json()
 
     expect(res.status).toBe(200)
