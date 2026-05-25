@@ -1,13 +1,73 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Post {
+  id          String   @id @default(cuid())
+  redditId    String   @unique
+  subreddit   String
+  title       String
+  body        String
+  author      String
+  url         String
+  postedAt    DateTime
+  score       Int
+  numComments Int
+  fetchedAt   DateTime @default(now())
+
+  signal  ExtractedSignal?
+  lead    Lead?
+}
+
+model ExtractedSignal {
+  id           String   @id @default(cuid())
+  postId       String   @unique
+  post         Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  technologies String[]
+  painPoints   String[]
+  seniority    String
+  remote       Boolean
+  startupStage String
+  matchScore   Int
+  summary      String
+  analyzedAt   DateTime @default(now())
+}
+
+model Lead {
+  id          String    @id @default(cuid())
+  postId      String    @unique
+  post        Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  status      LeadStatus @default(NEW)
+  contactedAt DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  messages GeneratedMessage[]
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  REPLIED
+  ARCHIVED
+}
+
+model GeneratedMessage {
+  id        String      @id @default(cuid())
+  leadId    String
+  lead      Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type      MessageType
+  content   String
+  createdAt DateTime    @default(now())
+}
+
+enum MessageType {
+  REDDIT_DM
+  EMAIL
+  LINKEDIN
 }
