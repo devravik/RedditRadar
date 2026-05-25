@@ -75,6 +75,13 @@ async function main() {
   })
   console.log('Seeded LEAD_THRESHOLD setting')
 
+  await prisma.setting.upsert({
+    where: { key: 'SENDER_NAME' },
+    update: {},
+    create: { key: 'SENDER_NAME', value: '' },
+  })
+  console.log('Seeded SENDER_NAME setting')
+
   for (const word of DEFAULT_BLOCKED_KEYWORDS) {
     await prisma.blockedKeyword.upsert({
       where: { word },

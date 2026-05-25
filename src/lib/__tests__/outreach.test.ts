@@ -8,6 +8,8 @@ const mockSignal = {
   painPoints: ['queue bottlenecks', 'slow reporting'],
   startupStage: 'growth',
   summary: 'SaaS startup scaling backend.',
+  matchScore: 85,
+  remote: true,
 }
 
 const mockPost = {
@@ -30,7 +32,7 @@ describe('generateOutreachMessage', () => {
   })
 
   it('returns a string message', async () => {
-    const msg = await generateOutreachMessage(mockPost, mockSignal, 'REDDIT_DM')
+    const msg = await generateOutreachMessage(mockPost, mockSignal, 'REDDIT_DM', 'Alice')
     expect(typeof msg).toBe('string')
     expect(msg.length).toBeGreaterThan(10)
   })
@@ -39,7 +41,7 @@ describe('generateOutreachMessage', () => {
     const OpenAI = jest.requireMock('openai').default
     const createSpy = OpenAI.prototype.chat.completions.create
 
-    await generateOutreachMessage(mockPost, mockSignal, 'EMAIL')
+    await generateOutreachMessage(mockPost, mockSignal, 'EMAIL', 'Alice')
 
     const call = createSpy.mock.calls[0][0]
     const systemMsg = call.messages.find((m: { role: string }) => m.role === 'system').content
@@ -50,11 +52,33 @@ describe('generateOutreachMessage', () => {
     const OpenAI = jest.requireMock('openai').default
     const createSpy = OpenAI.prototype.chat.completions.create
 
-    await generateOutreachMessage(mockPost, mockSignal, 'REDDIT_DM')
+    await generateOutreachMessage(mockPost, mockSignal, 'REDDIT_DM', 'Alice')
 
     const call = createSpy.mock.calls[0][0]
     const userMsg = call.messages.find((m: { role: string }) => m.role === 'user').content
     expect(userMsg).toContain('Laravel')
     expect(userMsg).toContain('queue bottlenecks')
+  })
+
+  it('includes sender name in the system prompt', async () => {
+    const OpenAI = jest.requireMock('openai').default
+    const createSpy = OpenAI.prototype.chat.completions.create
+
+    await generateOutreachMessage(mockPost, mockSignal, 'REDDIT_DM', 'Alice')
+
+    const call = createSpy.mock.calls[0][0]
+    const systemMsg = call.messages.find((m: { role: string }) => m.role === 'system').content
+    expect(systemMsg).toContain('Alice')
+  })
+
+  it('passes match score to model', async () => {
+    const OpenAI = jest.requireMock('openai').default
+    const createSpy = OpenAI.prototype.chat.completions.create
+
+    await generateOutreachMessage(mockPost, mockSignal, 'REDDIT_DM', 'Alice')
+
+    const call = createSpy.mock.calls[0][0]
+    const userMsg = call.messages.find((m: { role: string }) => m.role === 'user').content
+    expect(userMsg).toContain('85')
   })
 })

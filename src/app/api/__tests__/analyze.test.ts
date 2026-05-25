@@ -8,13 +8,17 @@ jest.mock('@/lib/db', () => ({
       findMany: jest.fn(),
     },
     extractedSignal: {
-      create: jest.fn().mockResolvedValue({ id: 'sig1' }),
+      upsert: jest.fn().mockResolvedValue({ id: 'sig1' }),
+    },
+    lead: {
+      upsert: jest.fn().mockResolvedValue({ id: 'lead1' }),
     },
     setting: {
       findUnique: jest.fn(({ where: { key } }: { where: { key: string } }) => {
         if (key === 'ENGINEER_PROFILE') return Promise.resolve({ key, value: '' })
         if (key === 'AI_PROVIDER') return Promise.resolve({ key, value: 'openai' })
         if (key === 'AI_MODEL') return Promise.resolve({ key, value: 'gpt-4o' })
+        if (key === 'LEAD_THRESHOLD') return Promise.resolve({ key, value: '70' })
         return Promise.resolve(null)
       }),
     },
@@ -62,9 +66,15 @@ describe('POST /api/analyze', () => {
     const req = new NextRequest('http://localhost/api/analyze', { method: 'POST' })
     await POST(req)
 
-    expect(prisma.extractedSignal.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({
-        postId: 'post1',
+    expect(prisma.extractedSignal.upsert).toHaveBeenCalledWith({
+      where: { postId: 'post1' },
+      create: expect.objectContaining({
+        post: { connect: { id: 'post1' } },
+        matchScore: 75,
+        technologies: ['Laravel'],
+        painPoints: ['slow queries'],
+      }),
+      update: expect.objectContaining({
         matchScore: 75,
         technologies: ['Laravel'],
         painPoints: ['slow queries'],

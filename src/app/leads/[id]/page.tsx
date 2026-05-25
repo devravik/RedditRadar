@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { ScoreBadge } from '@/components/score-badge'
-import { StatusBadge } from '@/components/status-badge'
+import { LeadStatusUpdater } from '@/components/lead-status-updater'
 import { OutreachPanel } from '@/components/outreach-panel'
 import { LeadStatus, MessageType } from '@/types'
 
@@ -33,7 +33,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         <div className="flex items-center gap-2 mb-2">
           <span className="text-sm text-gray-400">r/{lead.post.subreddit}</span>
           {lead.post.signal && <ScoreBadge score={lead.post.signal.matchScore} />}
-          <StatusBadge status={lead.status as LeadStatus} />
+          <LeadStatusUpdater leadId={lead.id} currentStatus={lead.status as LeadStatus} />
         </div>
 
         <h1 className="text-xl font-bold text-gray-900 mb-1">{lead.post.title}</h1>

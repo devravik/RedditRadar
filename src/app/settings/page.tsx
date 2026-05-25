@@ -53,6 +53,14 @@ export default function SettingsHubPage() {
           <h2 className="font-semibold text-base">Lead Threshold</h2>
           <p className="text-sm text-gray-500 mt-1">Minimum AI score to auto-create a lead from a post</p>
         </Link>
+
+        <Link
+          href="/settings/sender-name"
+          className="block bg-white border rounded-lg p-5 hover:border-gray-400 transition-colors"
+        >
+          <h2 className="font-semibold text-base">Sender Name</h2>
+          <p className="text-sm text-gray-500 mt-1">Your name used in AI-generated outreach messages</p>
+        </Link>
       </div>
     </div>
   )
