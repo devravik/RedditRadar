@@ -90,6 +90,16 @@ describe('POST /api/subreddits', () => {
     expect(res.status).toBe(400)
   })
 
+  it('returns 400 for invalid fetchInterval', async () => {
+    const req = new NextRequest('http://localhost/api/subreddits', {
+      method: 'POST',
+      body: JSON.stringify({ name: 'golang', fetchInterval: 'MONTHLY' }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+    const res = await POST(req)
+    expect(res.status).toBe(400)
+  })
+
   it('returns 409 when subreddit already exists', async () => {
     ;(prisma.subreddit.create as jest.Mock).mockRejectedValue({ code: 'P2002' })
 
