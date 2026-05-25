@@ -1,5 +1,16 @@
-import { fetchSubredditPosts, fetchAllSubredditPosts, SUBREDDITS } from '@/lib/reddit'
+import { fetchSubredditPosts, fetchDueSubredditPosts } from '@/lib/reddit'
 import { RedditPost } from '@/types'
+
+jest.mock('@/lib/db', () => ({
+  prisma: {
+    subreddit: {
+      findMany: jest.fn(),
+      update: jest.fn().mockResolvedValue({}),
+    },
+  },
+}))
+
+import { prisma } from '@/lib/db'
 
 const mockPost = (id: string, subreddit: string): RedditPost => ({
   id,
@@ -14,11 +25,7 @@ const mockPost = (id: string, subreddit: string): RedditPost => ({
 })
 
 function makeRedditResponse(posts: RedditPost[]) {
-  return {
-    data: {
-      children: posts.map(p => ({ data: p })),
-    },
-  }
+  return { data: { children: posts.map(p => ({ data: p })) } }
 }
 
 describe('fetchSubredditPosts', () => {
@@ -39,46 +46,98 @@ describe('fetchSubredditPosts', () => {
     )
     expect(result).toHaveLength(2)
     expect(result[0].id).toBe('abc')
-    expect(result[0].subreddit).toBe('startups')
   })
 
   it('throws when Reddit returns non-OK status', async () => {
-    global.fetch = jest.fn().mockResolvedValue({
-      ok: false,
-      status: 429,
-    } as Response)
-
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 429 } as Response)
     await expect(fetchSubredditPosts('startups')).rejects.toThrow('Reddit API error: 429')
   })
 })
 
-describe('fetchAllSubredditPosts', () => {
-  it('aggregates posts from all configured subreddits', async () => {
-    global.fetch = jest.fn().mockImplementation((url: string) => {
-      const sub = (url as string).match(/\/r\/(\w+)\//)?.[1] ?? 'unknown'
-      return Promise.resolve({
-        ok: true,
-        json: async () => makeRedditResponse([mockPost('x', sub)]),
-      })
-    })
+describe('fetchDueSubredditPosts', () => {
+  beforeEach(() => jest.clearAllMocks())
 
-    const result = await fetchAllSubredditPosts()
+  it('returns empty when no enabled subreddits in DB', async () => {
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([])
+    global.fetch = jest.fn()
 
-    expect(result.length).toBe(SUBREDDITS.length)
+    const result = await fetchDueSubredditPosts()
+
+    expect(result.posts).toHaveLength(0)
+    expect(result.subreddits).toHaveLength(0)
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 
-  it('skips subreddits that return errors', async () => {
-    global.fetch = jest
-      .fn()
-      .mockResolvedValueOnce({ ok: false, status: 503 } as Response)
-      .mockResolvedValue({
-        ok: true,
-        json: async () => makeRedditResponse([mockPost('y', 'startups')]),
-      })
+  it('fetches subreddit with null lastFetchedAt (never fetched)', async () => {
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { id: 's1', name: 'startups', fetchInterval: 'DAILY', lastFetchedAt: null },
+    ])
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => makeRedditResponse([mockPost('a', 'startups')]),
+    } as Response)
 
-    const result = await fetchAllSubredditPosts()
+    const result = await fetchDueSubredditPosts()
 
-    // One failed, rest succeeded
-    expect(result.length).toBe(SUBREDDITS.length - 1)
+    expect(result.subreddits).toEqual(['startups'])
+    expect(result.posts).toHaveLength(1)
+  })
+
+  it('skips subreddit fetched within DAILY interval (not yet due)', async () => {
+    const recentDate = new Date(Date.now() - 60 * 60 * 1000) // 1 hour ago
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { id: 's1', name: 'startups', fetchInterval: 'DAILY', lastFetchedAt: recentDate },
+    ])
+    global.fetch = jest.fn()
+
+    const result = await fetchDueSubredditPosts()
+
+    expect(result.subreddits).toHaveLength(0)
+    expect(global.fetch).not.toHaveBeenCalled()
+  })
+
+  it('fetches subreddit past HOURLY interval (overdue)', async () => {
+    const oldDate = new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { id: 's1', name: 'laravel', fetchInterval: 'HOURLY', lastFetchedAt: oldDate },
+    ])
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => makeRedditResponse([mockPost('b', 'laravel')]),
+    } as Response)
+
+    const result = await fetchDueSubredditPosts()
+
+    expect(result.subreddits).toContain('laravel')
+    expect(result.posts).toHaveLength(1)
+  })
+
+  it('updates lastFetchedAt after successful fetch', async () => {
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { id: 's1', name: 'golang', fetchInterval: 'DAILY', lastFetchedAt: null },
+    ])
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => makeRedditResponse([]),
+    } as Response)
+
+    await fetchDueSubredditPosts()
+
+    expect(prisma.subreddit.update).toHaveBeenCalledWith({
+      where: { id: 's1' },
+      data: { lastFetchedAt: expect.any(Date) },
+    })
+  })
+
+  it('skips subreddit on fetch error and does not update lastFetchedAt', async () => {
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { id: 's1', name: 'forhire', fetchInterval: 'DAILY', lastFetchedAt: null },
+    ])
+    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 503 } as Response)
+
+    const result = await fetchDueSubredditPosts()
+
+    expect(result.subreddits).toHaveLength(0)
+    expect(prisma.subreddit.update).not.toHaveBeenCalled()
   })
 })
