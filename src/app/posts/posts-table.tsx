@@ -131,14 +131,12 @@ export default async function PostsTable({
                     r/{post.subreddit}
                   </td>
                   <td className="px-3 py-2.5 max-w-xs">
-                    <a
-                      href={post.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <Link
+                      href={`/post/${post.redditId}`}
                       className="text-gray-800 hover:text-blue-600 font-medium truncate block"
                     >
                       {post.title}
-                    </a>
+                    </Link>
                     {post.signal?.summary && (
                       <p className="text-xs text-gray-400 truncate mt-0.5">{post.signal.summary}</p>
                     )}

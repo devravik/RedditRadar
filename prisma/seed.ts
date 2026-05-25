@@ -28,6 +28,14 @@ const DEFAULT_BLOCKED_KEYWORDS = [
   'looking for work',
   'looking for a job',
   'job seeker',
+  'rate my resume',
+  'roast my resume',
+  'review my resume',
+  'rate my portfolio',
+  'looking for a mentor',
+  'looking for cofounder',
+  'looking for a co-founder',
+  'need career advice',
 ]
 
 async function main() {

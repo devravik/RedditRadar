@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzePost } from '@/lib/openai'
 import { prisma } from '@/lib/db'
+import { shouldSkipPost } from '@/lib/prefilter'
 
 export async function POST(_req: NextRequest) {
-  // Only fetch posts that have no ExtractedSignal yet
   let unanalyzed
   try {
     unanalyzed = await prisma.post.findMany({
       where: { signal: null },
-      select: { id: true, title: true, body: true },
-      take: 20, // batch limit to control OpenAI cost per call
+      select: { id: true, title: true, body: true, score: true, numComments: true },
+      take: 20,
     })
   } catch (err) {
     console.error('analyze findMany error:', err)
@@ -28,18 +28,33 @@ export async function POST(_req: NextRequest) {
   const leadThreshold = parseInt(thresholdSetting?.value ?? '70', 10)
   console.log(`[analyze] Provider: ${aiProvider}, Model: ${aiModel}, Threshold: ${leadThreshold}`)
 
-  console.log(`[analyze] ${unanalyzed.length} posts to analyze`)
+  const toAnalyze: typeof unanalyzed = []
+  const preFiltered: { title: string; reason: string }[] = []
+
+  for (const post of unanalyzed) {
+    const check = shouldSkipPost(post.title, post.body, post.score, post.numComments)
+    if (check.skip) {
+      preFiltered.push({ title: post.title, reason: check.reason! })
+    } else {
+      toAnalyze.push(post)
+    }
+  }
+
+  if (preFiltered.length > 0) {
+    console.log(`[analyze] Pre-filtered ${preFiltered.length} posts:`, preFiltered.map(p => `${p.reason}: "${p.title.slice(0, 50)}"`).join(', '))
+  }
+  console.log(`[analyze] ${toAnalyze.length} to analyze, ${preFiltered.length} pre-filtered`)
 
   let analyzed = 0
-  for (const post of unanalyzed) {
+  for (const post of toAnalyze) {
     console.log(`[analyze] Analyzing "${post.title.slice(0, 60)}"…`)
     try {
       const result = await analyzePost(post.title, post.body, engineerProfile, aiProvider, aiModel)
       console.log(`[analyze] → score ${result.matchScore} — ${result.summary}`)
 
       const data = {
-        technologies: (result.technologies ?? []).filter(Boolean),
-        painPoints: (result.painPoints ?? []).filter(Boolean),
+        technologies: Array.isArray(result.technologies) ? result.technologies.filter(Boolean) : [],
+        painPoints: Array.isArray(result.painPoints) ? result.painPoints.filter(Boolean) : [],
         seniority: String(result.seniority ?? 'unknown'),
         remote: result.remote === true || String(result.remote) === 'true',
         startupStage: String(result.startupStage ?? 'unknown'),
@@ -68,6 +83,6 @@ export async function POST(_req: NextRequest) {
     }
   }
 
-  console.log(`[analyze] Done — ${analyzed}/${unanalyzed.length} posts analyzed`)
-  return NextResponse.json({ analyzed })
+  console.log(`[analyze] Done — ${analyzed}/${toAnalyze.length} analyzed, ${preFiltered.length} pre-filtered`)
+  return NextResponse.json({ analyzed, preFiltered: preFiltered.length })
 }

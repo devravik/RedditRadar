@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { fetchSubredditPosts } from '@/lib/reddit'
 import { prisma } from '@/lib/db'
+import { shouldSkipPost } from '@/lib/prefilter'
 
 export async function POST(
   _req: Request,
@@ -30,8 +31,11 @@ export async function POST(
       if (post.created_utc * 1000 < cutoff) { skipped++; continue }
 
       const body = (post.selftext || '').slice(0, 5000)
+
       const titleBody = `${post.title} ${body}`.toLowerCase()
       if (blockedWords.some(w => titleBody.includes(w))) { skipped++; continue }
+
+      if (shouldSkipPost(post.title, body, post.score, post.num_comments).skip) { skipped++; continue }
 
       await prisma.post.upsert({
         where: { redditId: post.id },

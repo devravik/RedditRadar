@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { FetchInterval, RedditPost } from '@/types'
+import { shouldSkipPost } from '@/lib/prefilter'
 
 const INTERVAL_MS: Record<FetchInterval, number> = {
   HOURLY: 60 * 60 * 1000,
@@ -44,10 +45,14 @@ export async function fetchDueSubredditPosts(
 
       const withinAge = posts.filter(p => Date.now() - p.created_utc * 1000 <= maxAgeDays * 24 * 60 * 60 * 1000)
 
-      const filtered = withinAge.filter(p => {
+      const keywordFiltered = withinAge.filter(p => {
         const text = `${p.title} ${p.selftext}`.toLowerCase()
         return !blockedWords.some(w => text.includes(w))
       })
+
+      const filtered = keywordFiltered.filter(p =>
+        !shouldSkipPost(p.title, p.selftext, p.score, p.num_comments).skip
+      )
 
       skipped += posts.length - filtered.length
 
