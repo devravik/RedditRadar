@@ -65,7 +65,7 @@ export function BlockedKeywordList({ initial }: { initial: Keyword[] }) {
             <span className="text-sm font-mono text-gray-800">{k.word}</span>
             <button
               onClick={() => handleDelete(k.id)}
-              className="text-xs text-gray-400 hover:text-red-500 transition-colors"
+              className="text-xs text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
             >
               Remove
             </button>

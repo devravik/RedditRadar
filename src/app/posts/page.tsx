@@ -162,13 +162,13 @@ export default async function PostsPage({
           <div className="flex gap-2">
             <button
               type="submit"
-              className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors"
+              className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-800 transition-colors cursor-pointer"
             >
               Search
             </button>
             <a
               href="/posts"
-              className="px-3 py-1.5 text-sm border rounded text-gray-600 hover:border-gray-400 transition-colors"
+              className="px-3 py-1.5 text-sm border rounded text-gray-600 hover:border-gray-400 transition-colors cursor-pointer"
             >
               Clear
             </a>

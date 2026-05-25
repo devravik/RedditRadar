@@ -46,6 +46,8 @@ export default function PostsTable({
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [analyzing, setAnalyzing] = useState(false)
+  const [skipping, setSkipping] = useState(false)
+  const [skipIds, setSkipIds] = useState<Set<string>>(new Set())
   const [result, setResult] = useState<string | null>(null)
   const router = useRouter()
 
@@ -89,6 +91,40 @@ export default function PostsTable({
     }
   }
 
+  async function skipSelected() {
+    const ids = Array.from(selected)
+    if (ids.length === 0) return
+
+    setSkipping(true)
+    try {
+      await fetch('/api/analyze/skip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postIds: ids }),
+      })
+      setSelected(new Set())
+      router.refresh()
+    } catch {
+      setResult('Failed to skip posts')
+    } finally {
+      setSkipping(false)
+    }
+  }
+
+  async function skipSingle(id: string) {
+    setSkipIds(prev => new Set(prev).add(id))
+    try {
+      await fetch('/api/analyze/skip', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postIds: [id] }),
+      })
+      router.refresh()
+    } catch {
+      // silent
+    }
+  }
+
   const unanalyzedCount = posts.filter(p => !p.signal).length
   const selectedCount = selected.size
 
@@ -117,12 +153,19 @@ export default function PostsTable({
       <div className="flex items-center justify-between mb-3">
         <p className="text-xs text-gray-400">{total} post{total !== 1 ? 's' : ''}</p>
         {unanalyzedCount > 0 && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {result && <span className="text-xs text-gray-500">{result}</span>}
+            <button
+              onClick={skipSelected}
+              disabled={skipping || selectedCount === 0}
+              className="px-2.5 py-1 text-xs border border-gray-300 text-gray-500 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              {skipping ? 'Skipping…' : `Skip Selected (${selectedCount})`}
+            </button>
             <button
               onClick={analyzeSelected}
               disabled={analyzing || selectedCount === 0}
-              className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+              className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               {analyzing ? 'Analyzing…' : `Analyze Selected (${selectedCount})`}
             </button>
@@ -150,16 +193,16 @@ export default function PostsTable({
                   )}
                 </th>
                 <th className="px-3 py-2.5 text-left">
-                  <a href={sortLink('postedAt')} className="hover:text-gray-700">Date{sortArrow('postedAt')}</a>
+                  <a href={sortLink('postedAt')} className="hover:text-gray-700 cursor-pointer">Date{sortArrow('postedAt')}</a>
                 </th>
                 <th className="px-3 py-2.5 text-left">Subreddit</th>
                 <th className="px-3 py-2.5 text-left">Title</th>
                 <th className="px-3 py-2.5 text-left">Author</th>
                 <th className="px-3 py-2.5 text-center">
-                  <a href={sortLink('score')} className="hover:text-gray-700">Score{sortArrow('score')}</a>
+                  <a href={sortLink('score')} className="hover:text-gray-700 cursor-pointer">Score{sortArrow('score')}</a>
                 </th>
                 <th className="px-3 py-2.5 text-center">
-                  <a href={sortLink('matchScore')} className="hover:text-gray-700">Match{sortArrow('matchScore')}</a>
+                  <a href={sortLink('matchScore')} className="hover:text-gray-700 cursor-pointer">Match{sortArrow('matchScore')}</a>
                 </th>
                 <th className="px-3 py-2.5 text-left">Lead</th>
                 <th className="px-3 py-2.5 text-center">Action</th>
@@ -230,7 +273,16 @@ export default function PostsTable({
                     {post.signal ? (
                       <span className="text-[11px] text-gray-300">-</span>
                     ) : (
-                      <AnalyzePostButton postId={post.id} variant="table" />
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => skipSingle(post.id)}
+                          disabled={skipIds.has(post.id)}
+                          className="text-[11px] text-gray-400 hover:text-gray-700 disabled:text-gray-200 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          {skipIds.has(post.id) ? '…' : 'Skip'}
+                        </button>
+                        <AnalyzePostButton postId={post.id} variant="table" />
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -243,7 +295,7 @@ export default function PostsTable({
       {totalPages > 1 && (
         <div className="flex justify-center gap-2 mt-4">
           {page > 1 && (
-            <a href={pageLink(page - 1)} className="px-3 py-1 text-sm border rounded hover:border-gray-400">
+            <a href={pageLink(page - 1)} className="px-3 py-1 text-sm border rounded hover:border-gray-400 cursor-pointer">
               Previous
             </a>
           )}
@@ -251,7 +303,7 @@ export default function PostsTable({
             Page {page} of {totalPages}
           </span>
           {page < totalPages && (
-            <a href={pageLink(page + 1)} className="px-3 py-1 text-sm border rounded hover:border-gray-400">
+            <a href={pageLink(page + 1)} className="px-3 py-1 text-sm border rounded hover:border-gray-400 cursor-pointer">
               Next
             </a>
           )}

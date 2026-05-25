@@ -53,7 +53,7 @@ export function AnalyzePostButton({
       <button
         onClick={handleClick}
         disabled={loading}
-        className="text-[11px] text-blue-600 hover:text-blue-800 disabled:text-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
+        className="text-[11px] text-blue-600 hover:text-blue-800 disabled:text-gray-300 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
       >
         {loading ? '…' : 'Analyze'}
       </button>
@@ -64,7 +64,7 @@ export function AnalyzePostButton({
     <button
       onClick={handleClick}
       disabled={loading}
-      className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+        className="px-3 py-1.5 text-sm bg-gray-900 text-white rounded hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors cursor-pointer"
     >
       {loading ? 'Analyzing…' : 'Analyze This Post'}
     </button>

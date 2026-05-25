@@ -30,7 +30,7 @@ export function SubredditToggle({ id, enabled }: { id: string; enabled: boolean 
     <button
       onClick={toggle}
       disabled={loading}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors cursor-pointer ${
         value ? 'bg-gray-900' : 'bg-gray-200'
       } ${loading ? 'opacity-50' : ''}`}
       aria-label={value ? 'Disable' : 'Enable'}

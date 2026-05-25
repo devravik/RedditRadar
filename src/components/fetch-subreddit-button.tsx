@@ -44,7 +44,7 @@ export function FetchSubredditButton({ name }: { name: string }) {
     <button
       onClick={handleClick}
       disabled={loading}
-      className="text-xs text-gray-400 hover:text-gray-700 disabled:opacity-50 transition-colors"
+      className="text-xs text-gray-400 hover:text-gray-700 disabled:opacity-50 transition-colors cursor-pointer"
       title="Fetch posts now"
     >
       {loading ? '…' : 'fetch'}
