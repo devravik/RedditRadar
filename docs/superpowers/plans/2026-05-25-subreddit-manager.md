@@ -50,7 +50,7 @@ Created:
 
 - [ ] **Step 1: Add FetchInterval type to shared types**
 
-Edit `src/types/index.ts` — add after the existing types:
+Edit `src/types/index.ts` - add after the existing types:
 
 ```typescript
 export type FetchInterval = 'HOURLY' | 'DAILY' | 'WEEKLY'
@@ -58,7 +58,7 @@ export type FetchInterval = 'HOURLY' | 'DAILY' | 'WEEKLY'
 
 - [ ] **Step 2: Add Subreddit model to Prisma schema**
 
-Edit `prisma/schema.prisma` — append after the `MessageType` enum:
+Edit `prisma/schema.prisma` - append after the `MessageType` enum:
 
 ```prisma
 model Subreddit {
@@ -327,7 +327,7 @@ describe('fetchDueSubredditPosts', () => {
 npm test -- src/lib/__tests__/reddit.test.ts
 ```
 
-Expected: FAIL — `fetchDueSubredditPosts is not a function`
+Expected: FAIL - `fetchDueSubredditPosts is not a function`
 
 - [ ] **Step 3: Replace reddit.ts**
 
@@ -388,7 +388,7 @@ export async function fetchDueSubredditPosts(): Promise<{ posts: RedditPost[]; s
 npm test -- src/lib/__tests__/reddit.test.ts
 ```
 
-Expected: PASS — 8 tests pass
+Expected: PASS - 8 tests pass
 
 - [ ] **Step 5: Commit**
 
@@ -399,11 +399,11 @@ git commit -m "feat: replace hardcoded SUBREDDITS with DB-driven fetchDueSubredd
 
 ---
 
-## Task 3: Subreddits API — GET + POST (TDD)
+## Task 3: Subreddits API - GET + POST (TDD)
 
 **Files:**
 - Create: `src/app/api/subreddits/route.ts`
-- Create: `src/app/api/__tests__/subreddits.test.ts` (partial — GET + POST tests only)
+- Create: `src/app/api/__tests__/subreddits.test.ts` (partial - GET + POST tests only)
 
 - [ ] **Step 1: Write failing tests for GET and POST**
 
@@ -522,7 +522,7 @@ describe('POST /api/subreddits', () => {
 npm test -- src/app/api/__tests__/subreddits.test.ts
 ```
 
-Expected: FAIL — `Cannot find module '@/app/api/subreddits/route'`
+Expected: FAIL - `Cannot find module '@/app/api/subreddits/route'`
 
 - [ ] **Step 3: Implement GET + POST route**
 
@@ -552,7 +552,7 @@ export async function POST(req: NextRequest) {
 
   const name = normalizeName(body.name)
   if (!/^[a-z0-9_]+$/.test(name)) {
-    return NextResponse.json({ error: 'Invalid subreddit name — alphanumeric and underscores only' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid subreddit name - alphanumeric and underscores only' }, { status: 400 })
   }
 
   const fetchInterval = body.fetchInterval ?? 'DAILY'
@@ -581,18 +581,18 @@ export async function POST(req: NextRequest) {
 npm test -- src/app/api/__tests__/subreddits.test.ts
 ```
 
-Expected: PASS — 5 tests pass
+Expected: PASS - 5 tests pass
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/app/api/subreddits/route.ts src/app/api/__tests__/subreddits.test.ts
-git commit -m "feat: GET + POST /api/subreddits — list and create subreddits"
+git commit -m "feat: GET + POST /api/subreddits - list and create subreddits"
 ```
 
 ---
 
-## Task 4: Subreddits API — PATCH + DELETE (TDD)
+## Task 4: Subreddits API - PATCH + DELETE (TDD)
 
 **Files:**
 - Create: `src/app/api/subreddits/[id]/route.ts`
@@ -717,7 +717,7 @@ describe('DELETE /api/subreddits/[id]', () => {
 npm test -- src/app/api/__tests__/subreddits.test.ts
 ```
 
-Expected: FAIL — `Cannot find module '@/app/api/subreddits/[id]/route'`
+Expected: FAIL - `Cannot find module '@/app/api/subreddits/[id]/route'`
 
 - [ ] **Step 3: Implement PATCH + DELETE route**
 
@@ -781,13 +781,13 @@ export async function DELETE(
 npm test -- src/app/api/__tests__/subreddits.test.ts
 ```
 
-Expected: PASS — 11 tests pass
+Expected: PASS - 11 tests pass
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/app/api/subreddits/[id]/route.ts src/app/api/__tests__/subreddits.test.ts
-git commit -m "feat: PATCH + DELETE /api/subreddits/[id] — update and remove subreddits"
+git commit -m "feat: PATCH + DELETE /api/subreddits/[id] - update and remove subreddits"
 ```
 
 ---
@@ -801,7 +801,7 @@ git commit -m "feat: PATCH + DELETE /api/subreddits/[id] — update and remove s
 
 - [ ] **Step 1: Add export + import tests**
 
-First update the jest.mock at the top of `src/app/api/__tests__/subreddits.test.ts` to add the `create` mock used by import (already there — no change needed).
+First update the jest.mock at the top of `src/app/api/__tests__/subreddits.test.ts` to add the `create` mock used by import (already there - no change needed).
 
 Append to the bottom of `src/app/api/__tests__/subreddits.test.ts`:
 
@@ -984,7 +984,7 @@ export async function POST(req: NextRequest) {
 npm test -- src/app/api/__tests__/subreddits.test.ts
 ```
 
-Expected: PASS — 15 tests pass
+Expected: PASS - 15 tests pass
 
 - [ ] **Step 6: Commit**
 
@@ -1090,7 +1090,7 @@ describe('POST /api/fetch-posts', () => {
 npm test -- src/app/api/__tests__/fetch-posts.test.ts
 ```
 
-Expected: FAIL — `fetchDueSubredditPosts` not mocked / wrong signature
+Expected: FAIL - `fetchDueSubredditPosts` not mocked / wrong signature
 
 - [ ] **Step 3: Update fetch-posts route**
 
@@ -1142,7 +1142,7 @@ export async function POST(_req: NextRequest) {
 npm test -- src/app/api/__tests__/fetch-posts.test.ts
 ```
 
-Expected: PASS — 3 tests pass
+Expected: PASS - 3 tests pass
 
 - [ ] **Step 5: Update pipeline-buttons to show subreddit names**
 
@@ -1621,7 +1621,7 @@ export default async function SubredditsSettingsPage() {
             {subreddits.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-gray-400 text-sm">
-                  No subreddits yet — add one below
+                  No subreddits yet - add one below
                 </td>
               </tr>
             )}
@@ -1645,7 +1645,7 @@ export default async function SubredditsSettingsPage() {
           <CsvImportButton />
         </div>
         <p className="text-xs text-gray-400 mt-2">
-          CSV format: <code>name,enabled,fetchInterval</code> — import adds new subreddits only, never overwrites existing settings
+          CSV format: <code>name,enabled,fetchInterval</code> - import adds new subreddits only, never overwrites existing settings
         </p>
       </div>
     </div>
@@ -1655,7 +1655,7 @@ export default async function SubredditsSettingsPage() {
 
 - [ ] **Step 2: Add Settings nav link to layout**
 
-Edit `src/app/layout.tsx` — replace the `<header>` content:
+Edit `src/app/layout.tsx` - replace the `<header>` content:
 
 ```typescript
 import type { Metadata } from 'next'
@@ -1782,7 +1782,7 @@ git status
 **No gaps found.**
 
 **Type consistency:**
-- `FetchInterval` defined in Task 1 (`src/types/index.ts`) — used in Task 2 (`reddit.ts`) and Task 4 (`interval-select.tsx`)
-- `fetchDueSubredditPosts(): Promise<{ posts: RedditPost[], subreddits: string[] }>` — defined in Task 2, consumed in Task 6
-- `prisma.subreddit.update({ where: { id }, data: { lastFetchedAt: new Date() } })` — consistent across Task 2 and Task 4
-- PATCH params type `{ params: Promise<{ id: string }> }` — consistent with existing routes in codebase
+- `FetchInterval` defined in Task 1 (`src/types/index.ts`) - used in Task 2 (`reddit.ts`) and Task 4 (`interval-select.tsx`)
+- `fetchDueSubredditPosts(): Promise<{ posts: RedditPost[], subreddits: string[] }>` - defined in Task 2, consumed in Task 6
+- `prisma.subreddit.update({ where: { id }, data: { lastFetchedAt: new Date() } })` - consistent across Task 2 and Task 4
+- PATCH params type `{ params: Promise<{ id: string }> }` - consistent with existing routes in codebase

@@ -3,7 +3,7 @@
   <img alt="RedditRadar" src="https://socialify.git.ci/devravik/RedditRadar/image?description=1&font=Inter&language=1&name=1&owner=1&pattern=Solid&theme=Light" />
 </picture>
 
-**RedditRadar** is a self-hosted Reddit lead discovery and AI analysis platform for engineers. Monitor hiring posts and founder pain points across dozens of subreddits, score them against your profile, and manage your pipeline — all from your own infrastructure.
+**RedditRadar** is a self-hosted Reddit lead discovery and AI analysis platform for engineers. Monitor hiring posts and founder pain points across dozens of subreddits, score them against your profile, and manage your pipeline - all from your own infrastructure.
 
 Built with [Next.js](https://nextjs.org) 16, [Prisma](https://prisma.io) 7, PostgreSQL, and [Tailwind CSS](https://tailwindcss.com).
 
@@ -28,14 +28,14 @@ The goal was a lightweight self-hosted system that replaces expensive SaaS alter
 
 ## Features
 
-- **Subreddit Manager** — Add, remove, enable/disable subreddits; configure per-subreddit fetch intervals (hourly/daily/weekly). Bulk import/export via CSV.
-- **Smart Fetching** — Fetches posts from Reddit's JSON API with configurable max post age, keyword blocking, pattern-based pre-filtering, and rate-limit-aware pacing (1.5s pause between subreddits).
-- **AI Analysis** — Analyzes posts using OpenAI, OpenRouter, or Groq against your custom engineer profile. Extracts technologies, pain points, seniority level, remote suitability, startup stage, and match score (0–100).
-- **Pre-Filtering** — Before the LLM runs, posts are checked against noise patterns (resume reviews, weekly threads, advice-seeking, hardware shopping, etc.) to avoid wasting inference cost on obvious non-opportunities.
-- **Lead Pipeline** — Track promising leads through NEW → CONTACTED → REPLIED → ARCHIVED stages; generate outreach messages (Reddit DM, Email, LinkedIn) via AI.
-- **Auto-Lead Creation** — Posts scoring above a configurable threshold (default 70) automatically become leads.
-- **Post Browser** — Search and filter all imported posts by keyword, subreddit, analysis status, match score range, and lead status.
-- **Settings Hub** — Configure subreddits, filter keywords, engineer profile, AI provider/model, fetch age limits, and lead threshold from the UI.
+- **Subreddit Manager** - Add, remove, enable/disable subreddits; configure per-subreddit fetch intervals (hourly/daily/weekly). Bulk import/export via CSV.
+- **Smart Fetching** - Fetches posts from Reddit's JSON API with configurable max post age, keyword blocking, pattern-based pre-filtering, and rate-limit-aware pacing (1.5s pause between subreddits).
+- **AI Analysis** - Analyzes posts using OpenAI, OpenRouter, or Groq against your custom engineer profile. Extracts technologies, pain points, seniority level, remote suitability, startup stage, and match score (0–100).
+- **Pre-Filtering** - Before the LLM runs, posts are checked against noise patterns (resume reviews, weekly threads, advice-seeking, hardware shopping, etc.) to avoid wasting inference cost on obvious non-opportunities.
+- **Lead Pipeline** - Track promising leads through NEW → CONTACTED → REPLIED → ARCHIVED stages; generate outreach messages (Reddit DM, Email, LinkedIn) via AI.
+- **Auto-Lead Creation** - Posts scoring above a configurable threshold (default 70) automatically become leads.
+- **Post Browser** - Search and filter all imported posts by keyword, subreddit, analysis status, match score range, and lead status.
+- **Settings Hub** - Configure subreddits, filter keywords, engineer profile, AI provider/model, fetch age limits, and lead threshold from the UI.
 
 ---
 
@@ -152,12 +152,12 @@ Reddit JSON API → fetch-posts → Post table → pre-filter → analyze → Ex
                       └── Noise pattern pre-filter
 ```
 
-- **`/api/fetch-posts`** — Fetches due subreddits, filters by age + blocked keywords + noise patterns, upserts posts
-- **`/api/analyze`** — Batches unanalyzed posts, pre-filters known noise, sends remaining posts to AI, stores signals and auto-creates leads
-- **`/api/leads`** — CRUD for the lead pipeline
-- **`/api/generate-message`** — Generates outreach messages using configured AI provider
-- **`/api/subreddits`** — CRUD + CSV import/export for subreddits
-- **`/api/settings/*`** — Settings CRUD (profile, AI config, blocked keywords, fetch age, lead threshold)
+- **`/api/fetch-posts`** - Fetches due subreddits, filters by age + blocked keywords + noise patterns, upserts posts
+- **`/api/analyze`** - Batches unanalyzed posts, pre-filters known noise, sends remaining posts to AI, stores signals and auto-creates leads
+- **`/api/leads`** - CRUD for the lead pipeline
+- **`/api/generate-message`** - Generates outreach messages using configured AI provider
+- **`/api/subreddits`** - CRUD + CSV import/export for subreddits
+- **`/api/settings/*`** - Settings CRUD (profile, AI config, blocked keywords, fetch age, lead threshold)
 
 ---
 
@@ -170,7 +170,7 @@ Reddit's JSON API tolerates moderate request rates. The fetcher inserts a **1.5s
 The analyze endpoint processes posts in batches of **20 per request** to keep LLM costs predictable. Each click of "Analyze Posts" incurs at most 20 inference calls.
 
 ### Idempotent upserts
-Both `fetch-posts` and `analyze` use Prisma `upsert` keyed on `redditId` and `postId` respectively. Re-running the same pipeline is safe — duplicate data is never created.
+Both `fetch-posts` and `analyze` use Prisma `upsert` keyed on `redditId` and `postId` respectively. Re-running the same pipeline is safe - duplicate data is never created.
 
 ### AI cost optimization
 - **Pre-filtering**: Before any LLM inference, noise patterns (resume reviews, weekly threads, advice-seeking, etc.) are matched against title/body. Posts matching known non-opportunity patterns are skipped entirely.

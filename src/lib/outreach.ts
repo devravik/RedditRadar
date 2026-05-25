@@ -66,7 +66,7 @@ Style: ${TONE_BY_TYPE[type]}
 Voice: technical credibility, genuine interest, no recruiter-speak, no AI-spam tone.
 Engineer background: 12 years backend (Laravel, Go, PostgreSQL, Redis, SaaS infrastructure).
 
-RULE: Start by referencing the OP's specific problem from their post — not the post itself. Show you read and understood their pain point. Then offer relevant experience or a specific question.
+RULE: Start by referencing the OP's specific problem from their post - not the post itself. Show you read and understood their pain point. Then offer relevant experience or a specific question.
 SIGNAL CALIBRATION: match score ${signal.matchScore}/100. Higher score = stronger alignment. Adjust confidence proportionally.
 
 Never: "I came across your post", "I saw your post", "I was browsing", "reaching out", "I would love to", "I was wondering if", "your profile", "noticed you", "synergy", "leverage", "circle back", "touch base", corporate language, vague praise.`,
@@ -85,7 +85,7 @@ Detected signals:
 - Summary: ${signal.summary}
 ${techMatch}
 
-Write the ${type.replace('_', ' ').toLowerCase()} message now. Output only the message text — no explanations, no subject line wrapper.`,
+Write the ${type.replace('_', ' ').toLowerCase()} message now. Output only the message text - no explanations, no subject line wrapper.`,
       },
     ],
   })

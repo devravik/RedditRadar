@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import { ScoreBadge } from '@/components/score-badge'
+import { AnalyzePostButton } from '@/components/analyze-post-button'
 import Link from 'next/link'
 
 export default async function PostPage({
@@ -82,9 +83,9 @@ export default async function PostPage({
                 <div className="flex flex-wrap gap-1 mt-1">
                   {post.signal.technologies.length > 0
                     ? post.signal.technologies.map(t => (
-                        <span key={t} className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{t}</span>
-                      ))
-                    : <span className="text-gray-300">—</span>}
+                      <span key={t} className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{t}</span>
+                    ))
+                    : <span className="text-gray-300">-</span>}
                 </div>
               </div>
               <div>
@@ -92,9 +93,9 @@ export default async function PostPage({
                 <div className="flex flex-wrap gap-1 mt-1">
                   {post.signal.painPoints.length > 0
                     ? post.signal.painPoints.map(p => (
-                        <span key={p} className="bg-red-50 text-red-600 px-1.5 py-0.5 rounded">{p}</span>
-                      ))
-                    : <span className="text-gray-300">—</span>}
+                      <span key={p} className="bg-red-50 text-red-600 px-1.5 py-0.5 rounded">{p}</span>
+                    ))
+                    : <span className="text-gray-300">-</span>}
                 </div>
               </div>
               <div>
@@ -113,7 +114,8 @@ export default async function PostPage({
           </div>
         ) : (
           <div className="border-t pt-4 mt-2">
-            <p className="text-sm text-gray-400">Not yet analyzed</p>
+            <p className="text-sm text-gray-400 mb-3">Not yet analyzed</p>
+            <AnalyzePostButton postId={post.id} />
           </div>
         )}
       </div>

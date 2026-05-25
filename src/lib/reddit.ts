@@ -94,6 +94,6 @@ export async function fetchDueSubredditPosts(
     }
   }
 
-  console.log(`[fetch] Done — ${fetched} posts from ${subreddits.join(', ') || '(none)'} (${skipped} skipped)`)
+  console.log(`[fetch] Done - ${fetched} posts from ${subreddits.join(', ') || '(none)'} (${skipped} skipped)`)
   return { fetched, subreddits, skipped }
 }

@@ -21,7 +21,7 @@ export function LeadThresholdEditor({ initialThreshold }: { initialThreshold: nu
       if (res.ok) {
         const data = await res.json()
         setThreshold(String(data.threshold))
-        setMessage(`Saved — auto-lead at score ≥ ${data.threshold}`)
+        setMessage(`Saved - auto-lead at score ≥ ${data.threshold}`)
       } else {
         const data = await res.json()
         setMessage(data.error ?? 'Failed to save')

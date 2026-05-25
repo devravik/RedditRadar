@@ -2,19 +2,18 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Swal from 'sweetalert2'
 import { Button } from '@/components/ui/button'
 
 export function CsvImportButton() {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<string | null>(null)
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setLoading(true)
-    setResult(null)
     try {
       const text = await file.text()
       const res = await fetch('/api/subreddits/import', {
@@ -24,13 +23,13 @@ export function CsvImportButton() {
       })
       const data = await res.json()
       if (res.ok) {
-        setResult(`${data.added} added, ${data.skipped} skipped`)
+        Swal.fire({ icon: 'success', title: `${data.added} added, ${data.skipped} skipped`, toast: true, position: 'top-end', timer: 3000, showConfirmButton: false })
         router.refresh()
       } else {
-        setResult(data.error ?? 'Import failed')
+        Swal.fire({ icon: 'error', title: data.error ?? 'Import failed', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false })
       }
     } catch {
-      setResult('Network error during import')
+      Swal.fire({ icon: 'error', title: 'Network error during import', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false })
     } finally {
       setLoading(false)
       if (inputRef.current) inputRef.current.value = ''
@@ -55,7 +54,6 @@ export function CsvImportButton() {
       >
         {loading ? 'Importing…' : 'Import CSV'}
       </Button>
-      {result && <span className="text-xs text-gray-500">{result}</span>}
     </div>
   )
 }

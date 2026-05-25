@@ -40,7 +40,7 @@ export function AiSettingsForm({
         const data = await res.json()
         setProvider(data.provider)
         setModel(data.model)
-        setMessage(`Saved — ${data.provider} / ${data.model}`)
+        setMessage(`Saved - ${data.provider} / ${data.model}`)
       } else {
         const data = await res.json()
         setMessage(data.error ?? 'Failed to save')
@@ -77,11 +77,10 @@ export function AiSettingsForm({
               key={m}
               type="button"
               onClick={() => setModel(m)}
-              className={`text-xs px-2 py-1 rounded border ${
-                model === m
+              className={`text-xs px-2 py-1 rounded border ${model === m
                   ? 'bg-gray-900 text-white border-gray-900'
                   : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'
-              }`}
+                }`}
             >
               {m}
             </button>

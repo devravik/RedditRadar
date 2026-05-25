@@ -19,6 +19,8 @@ function createClient(provider: string): OpenAI {
   return new OpenAI({ apiKey, baseURL: config.baseURL })
 }
 
+const MAX_BODY_CHARS = 3000
+
 export async function analyzePost(
   title: string,
   body: string,
@@ -27,6 +29,10 @@ export async function analyzePost(
   model = 'gpt-4o'
 ): Promise<AnalysisResult> {
   const client = createClient(provider)
+
+  if (body && body.length > MAX_BODY_CHARS) {
+    body = body.slice(0, MAX_BODY_CHARS) + '\n\n[truncated]'
+  }
 
   const response = await client.chat.completions.create({
     model,

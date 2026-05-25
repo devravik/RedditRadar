@@ -26,9 +26,9 @@ export default async function AiSettingsPage() {
       <div className="mt-6 text-xs text-gray-400 space-y-1">
         <p>Requires the corresponding API key in your <code className="font-mono bg-gray-100 px-1 rounded">.env</code> file:</p>
         <ul className="list-disc pl-4 space-y-0.5">
-          <li><strong>openai</strong> — <code className="font-mono">OPENAI_API_KEY</code></li>
-          <li><strong>openrouter</strong> — <code className="font-mono">OPENROUTER_API_KEY</code></li>
-          <li><strong>groq</strong> — <code className="font-mono">GROQ_API_KEY</code></li>
+          <li><strong>openai</strong> - <code className="font-mono">OPENAI_API_KEY</code></li>
+          <li><strong>openrouter</strong> - <code className="font-mono">OPENROUTER_API_KEY</code></li>
+          <li><strong>groq</strong> - <code className="font-mono">GROQ_API_KEY</code></li>
         </ul>
       </div>
     </div>

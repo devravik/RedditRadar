@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Swal from 'sweetalert2'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -10,12 +11,10 @@ export function AddSubredditForm() {
   const [name, setName] = useState('')
   const [interval, setInterval] = useState('DAILY')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   async function handleAdd() {
     if (!name.trim()) return
     setLoading(true)
-    setError(null)
     try {
       const res = await fetch('/api/subreddits', {
         method: 'POST',
@@ -24,13 +23,14 @@ export function AddSubredditForm() {
       })
       if (!res.ok) {
         const data = await res.json()
-        setError(data.error ?? 'Failed to add subreddit')
+        Swal.fire({ icon: 'error', title: data.error ?? 'Failed to add subreddit', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false })
         return
       }
       setName('')
+      Swal.fire({ icon: 'success', title: `r/${name.trim()} added`, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false })
       router.refresh()
     } catch {
-      setError('Network error')
+      Swal.fire({ icon: 'error', title: 'Network error', toast: true, position: 'top-end', timer: 3000, showConfirmButton: false })
     } finally {
       setLoading(false)
     }
@@ -57,7 +57,6 @@ export function AddSubredditForm() {
       <Button onClick={handleAdd} disabled={loading || !name.trim()} size="sm" className="h-8">
         {loading ? 'Adding…' : 'Add'}
       </Button>
-      {error && <span className="text-xs text-red-500">{error}</span>}
     </div>
   )
 }

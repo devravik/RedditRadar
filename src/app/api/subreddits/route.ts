@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
 
   const name = normalizeName(body.name)
   if (!/^[a-z0-9_]+$/.test(name)) {
-    return NextResponse.json({ error: 'Invalid subreddit name — alphanumeric and underscores only' }, { status: 400 })
+    return NextResponse.json({ error: 'Invalid subreddit name - alphanumeric and underscores only' }, { status: 400 })
   }
 
   const fetchInterval = body.fetchInterval ?? 'DAILY'

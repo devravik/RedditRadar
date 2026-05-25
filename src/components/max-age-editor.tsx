@@ -21,7 +21,7 @@ export function MaxAgeEditor({ initialDays }: { initialDays: number }) {
       if (res.ok) {
         const data = await res.json()
         setDays(String(data.days))
-        setMessage(`Saved — max age is ${data.days} days`)
+        setMessage(`Saved - max age is ${data.days} days`)
       } else {
         const data = await res.json()
         setMessage(data.error ?? 'Failed to save')

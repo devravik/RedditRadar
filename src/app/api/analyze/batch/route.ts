@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { analyzePost } from '@/lib/openai'
-import { prisma } from '@/lib/db'
 import { shouldSkipPost } from '@/lib/prefilter'
+import { prisma } from '@/lib/db'
 
-export async function POST(_req: NextRequest) {
-  let unanalyzed
-  try {
-    unanalyzed = await prisma.post.findMany({
-      where: { signal: null },
-      select: { id: true, title: true, body: true, score: true, numComments: true },
-      take: 20,
-    })
-  } catch (err) {
-    console.error('analyze findMany error:', err)
-    return NextResponse.json({ error: 'Database error' }, { status: 500 })
+export async function POST(req: NextRequest) {
+  const { postIds } = await req.json()
+
+  if (!Array.isArray(postIds) || postIds.length === 0) {
+    return NextResponse.json({ error: 'postIds must be a non-empty array' }, { status: 400 })
+  }
+
+  const posts = await prisma.post.findMany({
+    where: { id: { in: postIds }, signal: null },
+    select: { id: true, title: true, body: true, score: true, numComments: true },
+  })
+
+  if (posts.length === 0) {
+    return NextResponse.json({ analyzed: 0, skipped: 0, preFiltered: 0, errors: 0 })
   }
 
   const [profileSetting, providerSetting, modelSetting, thresholdSetting] = await Promise.all([
@@ -26,31 +29,20 @@ export async function POST(_req: NextRequest) {
   const aiProvider = providerSetting?.value ?? 'openai'
   const aiModel = modelSetting?.value ?? 'gpt-4o'
   const leadThreshold = parseInt(thresholdSetting?.value ?? '70', 10)
-  console.log(`[analyze] Provider: ${aiProvider}, Model: ${aiModel}, Threshold: ${leadThreshold}`)
-
-  const toAnalyze: typeof unanalyzed = []
-  const preFiltered: { title: string; reason: string }[] = []
-
-  for (const post of unanalyzed) {
-    const check = shouldSkipPost(post.title, post.body, post.score, post.numComments)
-    if (check.skip) {
-      preFiltered.push({ title: post.title, reason: check.reason! })
-    } else {
-      toAnalyze.push(post)
-    }
-  }
-
-  if (preFiltered.length > 0) {
-    console.log(`[analyze] Pre-filtered ${preFiltered.length} posts:`, preFiltered.map(p => `${p.reason}: "${p.title.slice(0, 50)}"`).join(', '))
-  }
-  console.log(`[analyze] ${toAnalyze.length} to analyze, ${preFiltered.length} pre-filtered`)
 
   let analyzed = 0
-  for (const post of toAnalyze) {
-    console.log(`[analyze] Analyzing "${post.title.slice(0, 60)}"…`)
+  let preFiltered = 0
+  let errors = 0
+
+  for (const post of posts) {
+    const skip = shouldSkipPost(post.title, post.body, post.score, post.numComments)
+    if (skip.skip) {
+      preFiltered++
+      continue
+    }
+
     try {
       const result = await analyzePost(post.title, post.body, engineerProfile, aiProvider, aiModel)
-      console.log(`[analyze] → score ${result.matchScore} - ${result.summary}`)
 
       const data = {
         technologies: Array.isArray(result.technologies) ? result.technologies.filter(Boolean) : [],
@@ -74,15 +66,15 @@ export async function POST(_req: NextRequest) {
           create: { postId: post.id },
           update: {},
         })
-        console.log(`[analyze] → lead auto-created (score ${result.matchScore} >= ${leadThreshold})`)
       }
 
       analyzed++
     } catch (err) {
       console.error(`Failed to analyze post ${post.id}:`, err)
+      errors++
     }
   }
 
-  console.log(`[analyze] Done - ${analyzed}/${toAnalyze.length} analyzed, ${preFiltered.length} pre-filtered`)
-  return NextResponse.json({ analyzed, preFiltered: preFiltered.length })
+  const skipped = posts.length - analyzed - preFiltered - errors
+  return NextResponse.json({ analyzed, preFiltered, skipped, errors })
 }

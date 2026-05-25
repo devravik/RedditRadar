@@ -1,9 +1,71 @@
 import { Suspense } from 'react'
 import { prisma } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 import PostsTable from './posts-table'
 
 async function getSubreddits() {
   return prisma.subreddit.findMany({ select: { name: true }, orderBy: { name: 'asc' } })
+}
+
+async function getPosts(params: Record<string, string | undefined>) {
+  const search = params.search?.trim()
+  const subreddit = params.subreddit?.trim()
+  const analyzed = params.analyzed
+  const lead = params.lead
+  const minScore = params.minScore
+  const maxScore = params.maxScore
+  const sort = params.sort ?? 'postedAt'
+  const order = (params.order ?? 'desc') as 'asc' | 'desc'
+  const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
+  const limit = 50
+
+  const where: Prisma.PostWhereInput = {}
+
+  if (search) {
+    where.OR = [
+      { title: { contains: search, mode: 'insensitive' } },
+      { body: { contains: search, mode: 'insensitive' } },
+      { author: { contains: search, mode: 'insensitive' } },
+    ]
+  }
+
+  if (subreddit) {
+    where.subreddit = { contains: subreddit, mode: 'insensitive' }
+  }
+
+  if (analyzed === 'true') where.signal = { isNot: null }
+  else if (analyzed === 'false') where.signal = null
+
+  if (lead === 'true') where.lead = { isNot: null }
+  else if (lead === 'false') where.lead = null
+
+  if (minScore || maxScore) {
+    const scoreFilter: Record<string, number> = {}
+    if (minScore) scoreFilter.gte = parseInt(minScore, 10)
+    if (maxScore) scoreFilter.lte = parseInt(maxScore, 10)
+    where.signal = { is: { matchScore: scoreFilter } }
+  }
+
+  const orderBy: Prisma.PostOrderByWithRelationInput =
+    sort === 'score' ? { score: order } :
+    sort === 'matchScore' ? { signal: { matchScore: order } } :
+    { postedAt: order }
+
+  const [posts, total] = await Promise.all([
+    prisma.post.findMany({
+      where,
+      include: {
+        signal: { select: { matchScore: true, technologies: true, seniority: true, summary: true, analyzedAt: true } },
+        lead: { select: { id: true, status: true } },
+      },
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+    }),
+    prisma.post.count({ where }),
+  ])
+
+  return { posts, total, page, limit }
 }
 
 export default async function PostsPage({
@@ -12,10 +74,11 @@ export default async function PostsPage({
   searchParams: Promise<{ [key: string]: string | undefined }>
 }) {
   const resolvedParams = await searchParams
-  const subreddits = await getSubreddits()
-
-  const qs = new URLSearchParams()
-  Object.entries(resolvedParams).forEach(([k, v]) => { if (v) qs.set(k, v) })
+  const [subreddits, { posts, total, page, limit }] = await Promise.all([
+    getSubreddits(),
+    getPosts(resolvedParams),
+  ])
+  const totalPages = Math.ceil(total / limit)
 
   return (
     <div>
@@ -114,7 +177,15 @@ export default async function PostsPage({
       </div>
 
       <Suspense fallback={<div className="text-center py-8 text-sm text-gray-400">Loading posts…</div>}>
-        <PostsTable searchParams={resolvedParams} />
+        <PostsTable
+          posts={posts as any}
+          total={total}
+          page={page}
+          totalPages={totalPages}
+          searchParams={resolvedParams}
+          sortKey={(resolvedParams.sort ?? 'postedAt') as string}
+          sortOrder={(resolvedParams.order ?? 'desc') as 'asc' | 'desc'}
+        />
       </Suspense>
     </div>
   )

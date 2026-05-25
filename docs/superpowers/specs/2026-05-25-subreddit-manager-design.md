@@ -10,7 +10,7 @@
 
 - Add, remove, enable/disable subreddits from the UI without touching code
 - Set per-subreddit fetch intervals (Hourly / Daily / Weekly)
-- Import a subreddit list from CSV (merge — additive, no deletions)
+- Import a subreddit list from CSV (merge - additive, no deletions)
 - Export the current list to CSV
 
 ---
@@ -22,7 +22,7 @@ New Prisma model added to `prisma/schema.prisma`:
 ```prisma
 model Subreddit {
   id            String        @id @default(cuid())
-  name          String        @unique  // bare name, no "r/" prefix — e.g. "startups"
+  name          String        @unique  // bare name, no "r/" prefix - e.g. "startups"
   enabled       Boolean       @default(true)
   fetchInterval FetchInterval @default(DAILY)
   lastFetchedAt DateTime?
@@ -142,7 +142,7 @@ Accept CSV as plain text request body (`Content-Type: text/csv`).
 
 `src/app/layout.tsx` gets a "Settings" link in the header pointing to `/settings/subreddits`.
 
-### `/settings/subreddits` — `src/app/settings/subreddits/page.tsx`
+### `/settings/subreddits` - `src/app/settings/subreddits/page.tsx`
 
 Server component. Fetches subreddit list from DB directly via Prisma. Renders three sections:
 
@@ -153,10 +153,10 @@ One row per subreddit:
 | Column | Detail |
 |---|---|
 | Name | `r/startups` |
-| Enabled | Toggle (client component: `SubredditToggle`) — PATCHes `/api/subreddits/[id]` on change |
-| Interval | Select: Hourly / Daily / Weekly (client component: `IntervalSelect`) — PATCHes on change |
-| Last Fetched | Relative timestamp ("2h ago", "never") — server-rendered |
-| Actions | Delete button — confirms in-line, then DELETEs, triggers router.refresh() |
+| Enabled | Toggle (client component: `SubredditToggle`) - PATCHes `/api/subreddits/[id]` on change |
+| Interval | Select: Hourly / Daily / Weekly (client component: `IntervalSelect`) - PATCHes on change |
+| Last Fetched | Relative timestamp ("2h ago", "never") - server-rendered |
+| Actions | Delete button - confirms in-line, then DELETEs, triggers router.refresh() |
 
 Client components (`SubredditToggle`, `IntervalSelect`) are small focused components, not a full client page.
 
@@ -172,7 +172,7 @@ Inline below table. Client component `AddSubredditForm`:
 
 Two actions, no modal:
 
-**Export:** `<a href="/api/subreddits/export" download="subreddits.csv">` — simple anchor tag, browser handles download.
+**Export:** `<a href="/api/subreddits/export" download="subreddits.csv">` - simple anchor tag, browser handles download.
 
 **Import:**
 - File input (accept `.csv`)
@@ -189,7 +189,7 @@ src/
 ├── app/
 │   ├── settings/
 │   │   └── subreddits/
-│   │       └── page.tsx                    # Server component — settings page
+│   │       └── page.tsx                    # Server component - settings page
 │   └── api/
 │       └── subreddits/
 │           ├── route.ts                    # GET list, POST create
@@ -223,9 +223,9 @@ src/types/index.ts                         # Add FetchInterval type
 
 ## Tests
 
-- `src/lib/__tests__/reddit.test.ts` — update existing tests; add tests for `fetchDueSubredditPosts` with mocked DB (due/not-due/disabled subreddits)
-- `src/app/api/__tests__/subreddits.test.ts` — test GET, POST (valid/invalid/duplicate), PATCH, DELETE, import (valid CSV, malformed CSV, duplicate handling), export CSV format
-- `src/app/api/__tests__/fetch-posts.test.ts` — update to mock `fetchDueSubredditPosts` instead of `fetchAllSubredditPosts`
+- `src/lib/__tests__/reddit.test.ts` - update existing tests; add tests for `fetchDueSubredditPosts` with mocked DB (due/not-due/disabled subreddits)
+- `src/app/api/__tests__/subreddits.test.ts` - test GET, POST (valid/invalid/duplicate), PATCH, DELETE, import (valid CSV, malformed CSV, duplicate handling), export CSV format
+- `src/app/api/__tests__/fetch-posts.test.ts` - update to mock `fetchDueSubredditPosts` instead of `fetchAllSubredditPosts`
 
 ---
 

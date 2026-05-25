@@ -1,81 +1,100 @@
-import { prisma } from '@/lib/db'
-import { Prisma } from '@prisma/client'
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { ScoreBadge } from '@/components/score-badge'
 import { StatusBadge } from '@/components/status-badge'
+import { AnalyzePostButton } from '@/components/analyze-post-button'
+import type { LeadStatus } from '@/types'
 
-async function getPosts(params: Record<string, string | undefined>) {
-  const search = params.search?.trim()
-  const subreddit = params.subreddit?.trim()
-  const analyzed = params.analyzed
-  const lead = params.lead
-  const minScore = params.minScore
-  const maxScore = params.maxScore
-  const sort = params.sort ?? 'postedAt'
-  const order = (params.order ?? 'desc') as 'asc' | 'desc'
-  const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1)
-  const limit = 50
-
-  const where: Prisma.PostWhereInput = {}
-
-  if (search) {
-    where.OR = [
-      { title: { contains: search, mode: 'insensitive' } },
-      { body: { contains: search, mode: 'insensitive' } },
-      { author: { contains: search, mode: 'insensitive' } },
-    ]
-  }
-
-  if (subreddit) {
-    where.subreddit = { contains: subreddit, mode: 'insensitive' }
-  }
-
-  if (analyzed === 'true') where.signal = { isNot: null }
-  else if (analyzed === 'false') where.signal = null
-
-  if (lead === 'true') where.lead = { isNot: null }
-  else if (lead === 'false') where.lead = null
-
-  if (minScore || maxScore) {
-    const scoreFilter: Record<string, number> = {}
-    if (minScore) scoreFilter.gte = parseInt(minScore, 10)
-    if (maxScore) scoreFilter.lte = parseInt(maxScore, 10)
-    where.signal = { is: { matchScore: scoreFilter } }
-  }
-
-  const orderBy: Prisma.PostOrderByWithRelationInput =
-    sort === 'score' ? { score: order } :
-    sort === 'matchScore' ? { signal: { matchScore: order } } :
-    { postedAt: order }
-
-  const [posts, total] = await Promise.all([
-    prisma.post.findMany({
-      where,
-      include: {
-        signal: { select: { matchScore: true, technologies: true, seniority: true, summary: true, analyzedAt: true } },
-        lead: { select: { id: true, status: true } },
-      },
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.post.count({ where }),
-  ])
-
-  return { posts, total, page, limit }
+interface PostRow {
+  id: string
+  redditId: string
+  subreddit: string
+  title: string
+  author: string
+  score: number
+  postedAt: Date
+  numComments: number
+  signal: {
+    matchScore: number
+    technologies: string[]
+    seniority: string
+    summary: string
+    analyzedAt: Date
+  } | null
+  lead: { id: string; status: LeadStatus } | null
 }
 
-export default async function PostsTable({
+export default function PostsTable({
+  posts,
+  total,
+  page,
+  totalPages,
   searchParams,
+  sortKey,
+  sortOrder,
 }: {
+  posts: PostRow[]
+  total: number
+  page: number
+  totalPages: number
   searchParams: Record<string, string | undefined>
+  sortKey: string
+  sortOrder: 'asc' | 'desc'
 }) {
-  const { posts, total, page, limit } = await getPosts(searchParams)
-  const totalPages = Math.ceil(total / limit)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [analyzing, setAnalyzing] = useState(false)
+  const [result, setResult] = useState<string | null>(null)
+  const router = useRouter()
+
+  function toggle(id: string) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleAll() {
+    if (selected.size === posts.filter(p => !p.signal).length) {
+      setSelected(new Set())
+    } else {
+      setSelected(new Set(posts.filter(p => !p.signal).map(p => p.id)))
+    }
+  }
+
+  async function analyzeSelected() {
+    const ids = Array.from(selected)
+    if (ids.length === 0) return
+
+    setAnalyzing(true)
+    setResult(null)
+    try {
+      const res = await fetch('/api/analyze/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postIds: ids }),
+      })
+      const data = await res.json()
+      setResult(`Analyzed ${data.analyzed}, pre-filtered ${data.preFiltered}, errors ${data.errors}`)
+      setSelected(new Set())
+      router.refresh()
+    } catch {
+      setResult('Batch analysis failed')
+    } finally {
+      setAnalyzing(false)
+    }
+  }
+
+  const unanalyzedCount = posts.filter(p => !p.signal).length
+  const selectedCount = selected.size
 
   function sortLink(field: string) {
-    const currentSort = searchParams.sort ?? 'postedAt'
-    const currentOrder = searchParams.order ?? 'desc'
+    const currentSort = sortKey
+    const currentOrder = sortOrder
     const dir = currentSort === field && currentOrder === 'desc' ? 'asc' : 'desc'
     const qs = new URLSearchParams()
     Object.entries({ ...searchParams, sort: field, order: dir }).forEach(([k, v]) => { if (v) qs.set(k, v) })
@@ -89,13 +108,27 @@ export default async function PostsTable({
   }
 
   function sortArrow(field: string) {
-    if ((searchParams.sort ?? 'postedAt') !== field) return ''
-    return searchParams.order === 'asc' ? ' ▲' : ' ▼'
+    if (sortKey !== field) return ''
+    return sortOrder === 'asc' ? ' ▲' : ' ▼'
   }
 
   return (
     <div>
-      <p className="text-xs text-gray-400 mb-3">{total} post{total !== 1 ? 's' : ''}</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-xs text-gray-400">{total} post{total !== 1 ? 's' : ''}</p>
+        {unanalyzedCount > 0 && (
+          <div className="flex items-center gap-3">
+            {result && <span className="text-xs text-gray-500">{result}</span>}
+            <button
+              onClick={analyzeSelected}
+              disabled={analyzing || selectedCount === 0}
+              className="px-3 py-1 text-xs bg-gray-900 text-white rounded hover:bg-gray-800 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+            >
+              {analyzing ? 'Analyzing…' : `Analyze Selected (${selectedCount})`}
+            </button>
+          </div>
+        )}
+      </div>
 
       {posts.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
@@ -106,6 +139,16 @@ export default async function PostsTable({
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                <th className="px-3 py-2.5 text-center w-8">
+                  {unanalyzedCount > 0 && (
+                    <input
+                      type="checkbox"
+                      checked={selected.size > 0 && selected.size === unanalyzedCount}
+                      onChange={toggleAll}
+                      className="accent-gray-900"
+                    />
+                  )}
+                </th>
                 <th className="px-3 py-2.5 text-left">
                   <a href={sortLink('postedAt')} className="hover:text-gray-700">Date{sortArrow('postedAt')}</a>
                 </th>
@@ -119,11 +162,22 @@ export default async function PostsTable({
                   <a href={sortLink('matchScore')} className="hover:text-gray-700">Match{sortArrow('matchScore')}</a>
                 </th>
                 <th className="px-3 py-2.5 text-left">Lead</th>
+                <th className="px-3 py-2.5 text-center">Action</th>
               </tr>
             </thead>
             <tbody>
               {posts.map(post => (
-                <tr key={post.id} className="border-b last:border-0 hover:bg-gray-50">
+                <tr key={post.id} className={`border-b last:border-0 hover:bg-gray-50 ${selected.has(post.id) ? 'bg-blue-50' : ''}`}>
+                  <td className="px-3 py-2.5 text-center">
+                    {!post.signal && (
+                      <input
+                        type="checkbox"
+                        checked={selected.has(post.id)}
+                        onChange={() => toggle(post.id)}
+                        className="accent-gray-900"
+                      />
+                    )}
+                  </td>
                   <td className="px-3 py-2.5 text-xs text-gray-400 whitespace-nowrap">
                     {new Date(post.postedAt).toLocaleDateString()}
                   </td>
@@ -160,7 +214,7 @@ export default async function PostsTable({
                     {post.signal ? (
                       <ScoreBadge score={post.signal.matchScore} />
                     ) : (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-gray-300">-</span>
                     )}
                   </td>
                   <td className="px-3 py-2.5">
@@ -169,7 +223,14 @@ export default async function PostsTable({
                         <StatusBadge status={post.lead.status} />
                       </Link>
                     ) : (
-                      <span className="text-xs text-gray-300">—</span>
+                      <span className="text-xs text-gray-300">-</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {post.signal ? (
+                      <span className="text-[11px] text-gray-300">-</span>
+                    ) : (
+                      <AnalyzePostButton postId={post.id} variant="table" />
                     )}
                   </td>
                 </tr>
