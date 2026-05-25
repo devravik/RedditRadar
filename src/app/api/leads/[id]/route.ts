@@ -3,13 +3,13 @@ import { prisma } from '@/lib/db'
 
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const lead = await prisma.lead.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
-      post: true,
-      signal: true,
+      post: { include: { signal: true } },
       messages: { orderBy: { createdAt: 'desc' } },
     },
   })
@@ -20,8 +20,9 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const body = await req.json()
 
   const data: Record<string, unknown> = {}
@@ -32,7 +33,7 @@ export async function PATCH(
   if (body.notes !== undefined) data.notes = body.notes
 
   const lead = await prisma.lead.update({
-    where: { id: params.id },
+    where: { id },
     data,
   })
   return NextResponse.json(lead)
