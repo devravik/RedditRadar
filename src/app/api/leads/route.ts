@@ -15,13 +15,25 @@ export async function GET(_req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  if (!body.postId) {
-    return NextResponse.json({ error: 'postId is required' }, { status: 400 })
-  }
+  try {
+    const body = await req.json()
+    if (!body.postId) {
+      return NextResponse.json({ error: 'postId is required' }, { status: 400 })
+    }
 
-  const lead = await prisma.lead.create({
-    data: { postId: body.postId },
-  })
-  return NextResponse.json(lead, { status: 201 })
+    const lead = await prisma.lead.create({
+      data: { postId: body.postId },
+    })
+    return NextResponse.json(lead, { status: 201 })
+  } catch (err: unknown) {
+    const prismaErr = err as { code?: string }
+    if (prismaErr.code === 'P2002') {
+      return NextResponse.json({ error: 'Lead already exists for this post' }, { status: 409 })
+    }
+    if (prismaErr.code === 'P2003') {
+      return NextResponse.json({ error: 'Post not found' }, { status: 422 })
+    }
+    console.error('POST /api/leads error:', err)
+    return NextResponse.json({ error: 'Failed to create lead' }, { status: 500 })
+  }
 }

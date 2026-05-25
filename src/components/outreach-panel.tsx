@@ -14,20 +14,29 @@ interface Props {
 export function OutreachPanel({ leadId, existingMessages }: Props) {
   const [type, setType] = useState<MessageType>('REDDIT_DM')
   const [message, setMessage] = useState('')
+  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [saved, setSaved] = useState(existingMessages)
 
   async function generate() {
     setLoading(true)
+    setError(null)
     try {
       const res = await fetch('/api/generate-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leadId, type }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Unknown error' }))
+        setError(err.error ?? 'Failed to generate message')
+        return
+      }
       const data = await res.json()
       setMessage(data.content)
       setSaved(prev => [data, ...prev])
+    } catch {
+      setError('Network error — could not generate message')
     } finally {
       setLoading(false)
     }
@@ -35,6 +44,7 @@ export function OutreachPanel({ leadId, existingMessages }: Props) {
 
   return (
     <div className="space-y-4">
+      {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2 items-center">
         <Select value={type} onValueChange={v => setType(v as MessageType)}>
           <SelectTrigger className="w-40">

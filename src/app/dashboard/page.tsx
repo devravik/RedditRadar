@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { ScoreBadge } from '@/components/score-badge'
 import { StatusBadge } from '@/components/status-badge'
-import { Button } from '@/components/ui/button'
+import { PipelineButtons } from '@/components/pipeline-buttons'
 import { LeadStatus } from '@/types'
 
 async function getLeads(status?: string) {
@@ -43,14 +43,7 @@ export default async function DashboardPage({
           <h1 className="text-2xl font-bold">Leads</h1>
           <p className="text-sm text-gray-500 mt-0.5">{leads.length} tracked · {unanalyzed} posts awaiting analysis</p>
         </div>
-        <div className="flex gap-2">
-          <form action="/api/fetch-posts" method="POST">
-            <Button type="submit" variant="outline" size="sm">Refresh Reddit</Button>
-          </form>
-          <form action="/api/analyze" method="POST">
-            <Button type="submit" size="sm">Analyze Posts</Button>
-          </form>
-        </div>
+        <PipelineButtons />
       </div>
 
       {/* Status filter */}

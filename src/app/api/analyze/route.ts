@@ -4,11 +4,17 @@ import { prisma } from '@/lib/db'
 
 export async function POST(_req: NextRequest) {
   // Only fetch posts that have no ExtractedSignal yet
-  const unanalyzed = await prisma.post.findMany({
-    where: { signal: null },
-    select: { id: true, title: true, body: true },
-    take: 20, // batch limit to control OpenAI cost per call
-  })
+  let unanalyzed
+  try {
+    unanalyzed = await prisma.post.findMany({
+      where: { signal: null },
+      select: { id: true, title: true, body: true },
+      take: 20, // batch limit to control OpenAI cost per call
+    })
+  } catch (err) {
+    console.error('analyze findMany error:', err)
+    return NextResponse.json({ error: 'Database error' }, { status: 500 })
+  }
 
   let analyzed = 0
   for (const post of unanalyzed) {
