@@ -23,4 +23,4 @@ export interface AnalysisResult {
   summary: string
 }
 
-export type FetchInterval = 'HOURLY' | 'DAILY' | 'WEEKLY'
+export type { FetchInterval } from '@prisma/client'
