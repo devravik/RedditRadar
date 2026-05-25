@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { FetchInterval } from '@prisma/client'
 import { prisma } from '@/lib/db'
 
-const VALID_INTERVALS = ['HOURLY', 'DAILY', 'WEEKLY']
+const VALID_INTERVALS: FetchInterval[] = ['HOURLY', 'DAILY', 'WEEKLY']
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,8 +23,8 @@ export async function POST(req: NextRequest) {
       const name = rawName.replace(/^r\//i, '').toLowerCase()
       if (!/^[a-z0-9_]+$/.test(name)) { skipped++; continue }
 
-      const fetchInterval = VALID_INTERVALS.includes(parts[2]?.trim())
-        ? parts[2].trim()
+      const fetchInterval: FetchInterval = VALID_INTERVALS.includes(parts[2]?.trim() as FetchInterval)
+        ? (parts[2].trim() as FetchInterval)
         : 'DAILY'
 
       try {

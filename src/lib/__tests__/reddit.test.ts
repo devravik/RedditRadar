@@ -7,10 +7,15 @@ jest.mock('@/lib/db', () => ({
       findMany: jest.fn(),
       update: jest.fn().mockResolvedValue({}),
     },
+    post: {
+      upsert: jest.fn().mockResolvedValue({ id: 'cuid1' }),
+    },
   },
 }))
 
 import { prisma } from '@/lib/db'
+
+const NOW = Math.floor(Date.now() / 1000)
 
 const mockPost = (id: string, subreddit: string): RedditPost => ({
   id,
@@ -19,7 +24,7 @@ const mockPost = (id: string, subreddit: string): RedditPost => ({
   selftext: 'We need backend help',
   author: 'founder_bob',
   url: `https://reddit.com/r/${subreddit}/comments/${id}`,
-  created_utc: 1716825600,
+  created_utc: NOW - 3600,
   score: 5,
   num_comments: 2,
 })
@@ -63,8 +68,9 @@ describe('fetchDueSubredditPosts', () => {
 
     const result = await fetchDueSubredditPosts()
 
-    expect(result.posts).toHaveLength(0)
+    expect(result.fetched).toBe(0)
     expect(result.subreddits).toHaveLength(0)
+    expect(result.skipped).toBe(0)
     expect(global.fetch).not.toHaveBeenCalled()
   })
 
@@ -80,11 +86,12 @@ describe('fetchDueSubredditPosts', () => {
     const result = await fetchDueSubredditPosts()
 
     expect(result.subreddits).toEqual(['startups'])
-    expect(result.posts).toHaveLength(1)
+    expect(result.fetched).toBe(1)
+    expect(prisma.post.upsert).toHaveBeenCalled()
   })
 
   it('skips subreddit fetched within DAILY interval (not yet due)', async () => {
-    const recentDate = new Date(Date.now() - 60 * 60 * 1000) // 1 hour ago
+    const recentDate = new Date(Date.now() - 60 * 60 * 1000)
     ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
       { id: 's1', name: 'startups', fetchInterval: 'DAILY', lastFetchedAt: recentDate },
     ])
@@ -97,7 +104,7 @@ describe('fetchDueSubredditPosts', () => {
   })
 
   it('fetches subreddit past HOURLY interval (overdue)', async () => {
-    const oldDate = new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+    const oldDate = new Date(Date.now() - 2 * 60 * 60 * 1000)
     ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
       { id: 's1', name: 'laravel', fetchInterval: 'HOURLY', lastFetchedAt: oldDate },
     ])
@@ -109,7 +116,7 @@ describe('fetchDueSubredditPosts', () => {
     const result = await fetchDueSubredditPosts()
 
     expect(result.subreddits).toContain('laravel')
-    expect(result.posts).toHaveLength(1)
+    expect(result.fetched).toBe(1)
   })
 
   it('updates lastFetchedAt after successful fetch', async () => {
@@ -139,5 +146,42 @@ describe('fetchDueSubredditPosts', () => {
 
     expect(result.subreddits).toHaveLength(0)
     expect(prisma.subreddit.update).not.toHaveBeenCalled()
+  })
+
+  it('filters out posts containing blocked words', async () => {
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { id: 's1', name: 'startups', fetchInterval: 'DAILY', lastFetchedAt: null },
+    ])
+    const postWithHire = mockPost('a', 'startups')
+    postWithHire.title = 'Looking for hire backend dev'
+    const postClean = mockPost('b', 'startups')
+    postClean.title = 'Need help with scaling'
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => makeRedditResponse([postWithHire, postClean]),
+    } as Response)
+
+    const result = await fetchDueSubredditPosts(['for hire'])
+
+    expect(result.fetched).toBe(1)
+    expect(result.skipped).toBe(1)
+  })
+
+  it('filters out posts older than 2 months', async () => {
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { id: 's1', name: 'startups', fetchInterval: 'DAILY', lastFetchedAt: null },
+    ])
+    const oldPost = mockPost('a', 'startups')
+    oldPost.created_utc = NOW - 100 * 24 * 3600
+    const recentPost = mockPost('b', 'startups')
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => makeRedditResponse([oldPost, recentPost]),
+    } as Response)
+
+    const result = await fetchDueSubredditPosts()
+
+    expect(result.fetched).toBe(1)
+    expect(result.skipped).toBe(1)
   })
 })

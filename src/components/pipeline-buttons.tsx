@@ -16,7 +16,13 @@ export function PipelineButtons() {
     try {
       const res = await fetch('/api/fetch-posts', { method: 'POST' })
       const data = await res.json()
-      setMessage(`Fetched ${data.fetched} posts`)
+      if (data.subreddits?.length > 0) {
+        let msg = `Fetched ${data.fetched} posts from ${data.subreddits.join(', ')}`
+        if (data.skipped > 0) msg += ` (${data.skipped} filtered)`
+        setMessage(msg)
+      } else {
+        setMessage('No subreddits due for fetching')
+      }
       router.refresh()
     } catch {
       setMessage('Failed to fetch posts')

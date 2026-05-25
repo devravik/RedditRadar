@@ -86,3 +86,14 @@ enum FetchInterval {
   DAILY
   WEEKLY
 }
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+model BlockedKeyword {
+  id   String @id @default(cuid())
+  word String @unique
+}

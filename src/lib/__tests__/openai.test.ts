@@ -28,7 +28,8 @@ describe('analyzePost', () => {
   it('returns parsed AnalysisResult for a post', async () => {
     const result = await analyzePost(
       'Backend engineer needed for SaaS startup',
-      'We are struggling with Laravel queues and slow reporting'
+      'We are struggling with Laravel queues and slow reporting',
+      'Test profile'
     )
 
     expect(result.matchScore).toBe(88)
@@ -41,7 +42,7 @@ describe('analyzePost', () => {
     const OpenAI = jest.requireMock('openai').default
     const createSpy = OpenAI.prototype.chat.completions.create
 
-    await analyzePost('My Title', 'My Body')
+    await analyzePost('My Title', 'My Body', 'Test profile')
 
     const call = createSpy.mock.calls[0][0]
     const userMsg = call.messages.find((m: { role: string }) => m.role === 'user').content
@@ -53,7 +54,7 @@ describe('analyzePost', () => {
     const OpenAI = jest.requireMock('openai').default
     const createSpy = OpenAI.prototype.chat.completions.create
 
-    await analyzePost('Title', 'Body')
+    await analyzePost('Title', 'Body', 'Test profile')
 
     const call = createSpy.mock.calls[0][0]
     expect(call.response_format).toEqual({ type: 'json_object' })

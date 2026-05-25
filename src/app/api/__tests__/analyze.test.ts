@@ -10,6 +10,14 @@ jest.mock('@/lib/db', () => ({
     extractedSignal: {
       create: jest.fn().mockResolvedValue({ id: 'sig1' }),
     },
+    setting: {
+      findUnique: jest.fn(({ where: { key } }: { where: { key: string } }) => {
+        if (key === 'ENGINEER_PROFILE') return Promise.resolve({ key, value: '' })
+        if (key === 'AI_PROVIDER') return Promise.resolve({ key, value: 'openai' })
+        if (key === 'AI_MODEL') return Promise.resolve({ key, value: 'gpt-4o' })
+        return Promise.resolve(null)
+      }),
+    },
   },
 }))
 

@@ -330,7 +330,7 @@ export interface AnalysisResult {
   seniority: string
   remote: boolean
   startupStage: string
-  matchScore: number  // 0–100
+  matchScore: number  // 0-100
   summary: string
 }
 ```
@@ -463,7 +463,7 @@ describe('fetchAllSubredditPosts', () => {
 npm test -- src/lib/__tests__/reddit.test.ts
 ```
 
-Expected: FAIL — `Cannot find module '@/lib/reddit'`
+Expected: FAIL - `Cannot find module '@/lib/reddit'`
 
 - [ ] **Step 3: Implement the fetcher**
 
@@ -512,7 +512,7 @@ export async function fetchAllSubredditPosts(): Promise<RedditPost[]> {
 npm test -- src/lib/__tests__/reddit.test.ts
 ```
 
-Expected: PASS — 4 tests pass
+Expected: PASS - 4 tests pass
 
 - [ ] **Step 5: Commit**
 
@@ -603,7 +603,7 @@ describe('analyzePost', () => {
 npm test -- src/lib/__tests__/openai.test.ts
 ```
 
-Expected: FAIL — `Cannot find module '@/lib/openai'`
+Expected: FAIL - `Cannot find module '@/lib/openai'`
 
 - [ ] **Step 3: Implement the analysis module**
 
@@ -635,13 +635,13 @@ Engineer profile:
 ${ENGINEER_PROFILE}
 
 Return a JSON object with exactly these keys:
-- technologies: string[] — detected tech stack mentioned
-- painPoints: string[] — specific technical problems mentioned
-- seniority: "junior" | "mid" | "senior" | "lead" | "unknown" — level sought
-- remote: boolean — remote work mentioned or implied
+- technologies: string[] - detected tech stack mentioned
+- painPoints: string[] - specific technical problems mentioned
+- seniority: "junior" | "mid" | "senior" | "lead" | "unknown" - level sought
+- remote: boolean - remote work mentioned or implied
 - startupStage: "idea" | "early" | "growth" | "mature" | "unknown"
-- matchScore: number 0–100 — fit with engineer profile (100 = perfect match)
-- summary: string — one sentence describing the opportunity`,
+- matchScore: number 0-100 - fit with engineer profile (100 = perfect match)
+- summary: string - one sentence describing the opportunity`,
       },
       {
         role: 'user',
@@ -661,7 +661,7 @@ Return a JSON object with exactly these keys:
 npm test -- src/lib/__tests__/openai.test.ts
 ```
 
-Expected: PASS — 3 tests pass
+Expected: PASS - 3 tests pass
 
 - [ ] **Step 5: Commit**
 
@@ -751,7 +751,7 @@ describe('generateOutreachMessage', () => {
 npm test -- src/lib/__tests__/outreach.test.ts
 ```
 
-Expected: FAIL — `Cannot find module '@/lib/outreach'`
+Expected: FAIL - `Cannot find module '@/lib/outreach'`
 
 - [ ] **Step 3: Implement the outreach generator**
 
@@ -764,9 +764,9 @@ import { MessageType } from '@/types'
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
 const TONE_BY_TYPE: Record<MessageType, string> = {
-  REDDIT_DM: 'a casual Reddit DM — short, developer-to-developer, no marketing fluff, 3–5 sentences max',
-  EMAIL: 'a brief cold email — subject line on first line, 4–6 sentences, direct and respectful',
-  LINKEDIN: 'a LinkedIn connection message — under 300 characters, direct value hook, no buzzwords',
+  REDDIT_DM: 'a casual Reddit DM - short, developer-to-developer, no marketing fluff, 3-5 sentences max',
+  EMAIL: 'a brief cold email - subject line on first line, 4-6 sentences, direct and respectful',
+  LINKEDIN: 'a LinkedIn connection message - under 300 characters, direct value hook, no buzzwords',
 }
 
 interface PostContext {
@@ -826,7 +826,7 @@ Write the ${type.replace('_', ' ').toLowerCase()} message now. Output only the m
 npm test -- src/lib/__tests__/outreach.test.ts
 ```
 
-Expected: PASS — 3 tests pass
+Expected: PASS - 3 tests pass
 
 - [ ] **Step 5: Commit**
 
@@ -924,7 +924,7 @@ describe('POST /api/fetch-posts', () => {
 npm test -- src/app/api/__tests__/fetch-posts.test.ts
 ```
 
-Expected: FAIL — `Cannot find module '@/app/api/fetch-posts/route'`
+Expected: FAIL - `Cannot find module '@/app/api/fetch-posts/route'`
 
 - [ ] **Step 3: Implement the route**
 
@@ -976,13 +976,13 @@ export async function POST(_req: NextRequest) {
 npm test -- src/app/api/__tests__/fetch-posts.test.ts
 ```
 
-Expected: PASS — 3 tests pass
+Expected: PASS - 3 tests pass
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/app/api/fetch-posts/ src/app/api/__tests__/fetch-posts.test.ts
-git commit -m "feat: POST /api/fetch-posts — ingest Reddit posts via upsert"
+git commit -m "feat: POST /api/fetch-posts - ingest Reddit posts via upsert"
 ```
 
 ---
@@ -1083,7 +1083,7 @@ describe('POST /api/analyze', () => {
 npm test -- src/app/api/__tests__/analyze.test.ts
 ```
 
-Expected: FAIL — `Cannot find module '@/app/api/analyze/route'`
+Expected: FAIL - `Cannot find module '@/app/api/analyze/route'`
 
 - [ ] **Step 3: Implement the route**
 
@@ -1134,13 +1134,13 @@ export async function POST(_req: NextRequest) {
 npm test -- src/app/api/__tests__/analyze.test.ts
 ```
 
-Expected: PASS — 3 tests pass
+Expected: PASS - 3 tests pass
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add src/app/api/analyze/ src/app/api/__tests__/analyze.test.ts
-git commit -m "feat: POST /api/analyze — batch AI analysis for unprocessed posts"
+git commit -m "feat: POST /api/analyze - batch AI analysis for unprocessed posts"
 ```
 
 ---
@@ -1257,7 +1257,7 @@ describe('PATCH /api/leads/[id]', () => {
 npm test -- src/app/api/__tests__/leads.test.ts
 ```
 
-Expected: FAIL — modules not found
+Expected: FAIL - modules not found
 
 - [ ] **Step 3: Implement leads list + create route**
 
@@ -1347,13 +1347,13 @@ export async function PATCH(
 npm test -- src/app/api/__tests__/leads.test.ts
 ```
 
-Expected: PASS — 4 tests pass
+Expected: PASS - 4 tests pass
 
 - [ ] **Step 6: Commit**
 
 ```bash
 git add src/app/api/leads/ src/app/api/__tests__/leads.test.ts
-git commit -m "feat: leads CRUD API routes — list, create, update status/notes"
+git commit -m "feat: leads CRUD API routes - list, create, update status/notes"
 ```
 
 ---
@@ -1416,7 +1416,7 @@ export async function POST(req: NextRequest) {
 
 ```bash
 git add src/app/api/generate-message/
-git commit -m "feat: POST /api/generate-message — create and store outreach messages"
+git commit -m "feat: POST /api/generate-message - create and store outreach messages"
 ```
 
 ---
@@ -1908,24 +1908,24 @@ npm run dev
 
 Expected: Server starts on `http://localhost:3000`
 
-- [ ] **Step 3: Manual smoke test — ingest posts**
+- [ ] **Step 3: Manual smoke test - ingest posts**
 
 ```bash
 curl -X POST http://localhost:3000/api/fetch-posts
 ```
 
-Expected: `{"fetched": <number>}` — should be > 0.
+Expected: `{"fetched": <number>}` - should be > 0.
 
-- [ ] **Step 4: Manual smoke test — analyze posts**
+- [ ] **Step 4: Manual smoke test - analyze posts**
 
 ```bash
 curl -X POST http://localhost:3000/api/analyze
 ```
 
-Expected: `{"analyzed": <number>}` — posts scored.
+Expected: `{"analyzed": <number>}` - posts scored.
 Note: This calls OpenAI. Ensure `OPENAI_API_KEY` is set in `.env.local`.
 
-- [ ] **Step 5: Manual smoke test — create a lead**
+- [ ] **Step 5: Manual smoke test - create a lead**
 
 ```bash
 # Get a post ID from the DB
@@ -1939,13 +1939,13 @@ Expected: `{"id": "...", "status": "NEW", ...}`
 
 - [ ] **Step 6: Open dashboard in browser**
 
-Open `http://localhost:3000` — should redirect to `/dashboard` and show leads.
+Open `http://localhost:3000` - should redirect to `/dashboard` and show leads.
 
 - [ ] **Step 7: Final commit**
 
 ```bash
 git add -A
-git commit -m "feat: RedditRadar MVP complete — Reddit ingestion, AI scoring, lead tracking, outreach generator"
+git commit -m "feat: RedditRadar MVP complete - Reddit ingestion, AI scoring, lead tracking, outreach generator"
 ```
 
 ---

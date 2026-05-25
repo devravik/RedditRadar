@@ -36,7 +36,7 @@ export function OutreachPanel({ leadId, existingMessages }: Props) {
       setMessage(data.content)
       setSaved(prev => [data, ...prev])
     } catch {
-      setError('Network error — could not generate message')
+      setError('Network error - could not generate message')
     } finally {
       setLoading(false)
     }

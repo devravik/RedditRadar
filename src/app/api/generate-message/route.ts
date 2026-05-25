@@ -32,10 +32,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Lead not found or not yet analyzed' }, { status: 404 })
     }
 
+    const [providerSetting, modelSetting] = await Promise.all([
+      prisma.setting.findUnique({ where: { key: 'AI_PROVIDER' } }),
+      prisma.setting.findUnique({ where: { key: 'AI_MODEL' } }),
+    ])
+    const aiProvider = providerSetting?.value ?? 'openai'
+    const aiModel = modelSetting?.value ?? 'gpt-4o'
+
+    console.log(`[generate-message] Provider: ${aiProvider}, Model: ${aiModel}`)
+
     const content = await generateOutreachMessage(
       { title: lead.post.title, body: lead.post.body, author: lead.post.author, subreddit: lead.post.subreddit },
       { technologies: lead.post.signal.technologies, painPoints: lead.post.signal.painPoints, startupStage: lead.post.signal.startupStage, summary: lead.post.signal.summary },
-      type as MessageType
+      type as MessageType,
+      aiProvider,
+      aiModel
     )
 
     const message = await prisma.generatedMessage.create({
