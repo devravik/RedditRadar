@@ -22,7 +22,7 @@ export async function fetchDueSubredditPosts(): Promise<{ posts: RedditPost[]; s
 
   const due = all.filter(s =>
     !s.lastFetchedAt ||
-    Date.now() - s.lastFetchedAt.getTime() >= INTERVAL_MS[s.fetchInterval as FetchInterval]
+    Date.now() - s.lastFetchedAt.getTime() >= INTERVAL_MS[s.fetchInterval]
   )
 
   const posts: RedditPost[] = []
