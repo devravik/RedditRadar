@@ -71,3 +71,18 @@ enum MessageType {
   EMAIL
   LINKEDIN
 }
+
+model Subreddit {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  enabled       Boolean       @default(true)
+  fetchInterval FetchInterval @default(DAILY)
+  lastFetchedAt DateTime?
+  createdAt     DateTime      @default(now())
+}
+
+enum FetchInterval {
+  HOURLY
+  DAILY
+  WEEKLY
+}

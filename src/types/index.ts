@@ -19,6 +19,8 @@ export interface AnalysisResult {
   seniority: string
   remote: boolean
   startupStage: string
-  matchScore: number  // 0–100
+  matchScore: number  // 0-100
   summary: string
 }
+
+export type FetchInterval = 'HOURLY' | 'DAILY' | 'WEEKLY'

@@ -2,6 +2,9 @@
   "name": "redditradar",
   "version": "0.1.0",
   "private": true,
+  "prisma": {
+    "seed": "npx tsx prisma/seed.ts"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -40,6 +43,7 @@
     "shadcn": "^4.8.0",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.11",
+    "tsx": "^4.22.3",
     "typescript": "^5"
   }
 }
