@@ -1,5 +1,7 @@
 import { GET, POST } from '@/app/api/subreddits/route'
 import { PATCH, DELETE } from '@/app/api/subreddits/[id]/route'
+import { GET as EXPORT } from '@/app/api/subreddits/export/route'
+import { POST as IMPORT } from '@/app/api/subreddits/import/route'
 import { NextRequest } from 'next/server'
 
 jest.mock('@/lib/db', () => ({
@@ -195,5 +197,92 @@ describe('DELETE /api/subreddits/[id]', () => {
     const req = new NextRequest('http://localhost/api/subreddits/notfound')
     const res = await DELETE(req, { params: Promise.resolve({ id: 'notfound' }) })
     expect(res.status).toBe(404)
+  })
+})
+
+describe('GET /api/subreddits/export', () => {
+  it('returns CSV with header row and one data row per subreddit', async () => {
+    ;(prisma.subreddit.findMany as jest.Mock).mockResolvedValue([
+      { name: 'startups', enabled: true, fetchInterval: 'DAILY' },
+      { name: 'laravel', enabled: false, fetchInterval: 'HOURLY' },
+    ])
+
+    const req = new NextRequest('http://localhost/api/subreddits/export')
+    const res = await EXPORT(req)
+    const text = await res.text()
+
+    expect(res.headers.get('Content-Type')).toContain('text/csv')
+    expect(res.headers.get('Content-Disposition')).toContain('subreddits.csv')
+    expect(text).toBe('name,enabled,fetchInterval\nstartups,true,DAILY\nlaravel,false,HOURLY')
+  })
+})
+
+describe('POST /api/subreddits/import', () => {
+  beforeEach(() => jest.clearAllMocks())
+
+  it('adds new subreddits and returns added/skipped counts', async () => {
+    ;(prisma.subreddit.create as jest.Mock)
+      .mockResolvedValueOnce({ name: 'golang' })
+      .mockRejectedValueOnce({ code: 'P2002' })
+
+    const csv = 'name,enabled,fetchInterval\ngolang,true,DAILY\nstartups,true,DAILY'
+    const req = new NextRequest('http://localhost/api/subreddits/import', {
+      method: 'POST',
+      body: csv,
+      headers: { 'Content-Type': 'text/csv' },
+    })
+    const res = await IMPORT(req)
+    const body = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(body.added).toBe(1)
+    expect(body.skipped).toBe(1)
+  })
+
+  it('strips r/ prefix from imported names', async () => {
+    ;(prisma.subreddit.create as jest.Mock).mockResolvedValue({ name: 'webdev' })
+
+    const csv = 'name,enabled,fetchInterval\nr/webdev,true,DAILY'
+    const req = new NextRequest('http://localhost/api/subreddits/import', {
+      method: 'POST',
+      body: csv,
+      headers: { 'Content-Type': 'text/csv' },
+    })
+    await IMPORT(req)
+
+    expect(prisma.subreddit.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ name: 'webdev' }),
+    })
+  })
+
+  it('skips rows with invalid names', async () => {
+    const csv = 'name,enabled,fetchInterval\ninvalid name!,true,DAILY\ngolang,true,DAILY'
+    ;(prisma.subreddit.create as jest.Mock).mockResolvedValue({ name: 'golang' })
+
+    const req = new NextRequest('http://localhost/api/subreddits/import', {
+      method: 'POST',
+      body: csv,
+      headers: { 'Content-Type': 'text/csv' },
+    })
+    const res = await IMPORT(req)
+    const body = await res.json()
+
+    expect(body.added).toBe(1)
+    expect(body.skipped).toBe(1)
+  })
+
+  it('works without header row', async () => {
+    ;(prisma.subreddit.create as jest.Mock).mockResolvedValue({ name: 'hiring' })
+
+    const csv = 'hiring,true,DAILY'
+    const req = new NextRequest('http://localhost/api/subreddits/import', {
+      method: 'POST',
+      body: csv,
+      headers: { 'Content-Type': 'text/csv' },
+    })
+    const res = await IMPORT(req)
+    const body = await res.json()
+
+    expect(body.added).toBe(1)
   })
 })
