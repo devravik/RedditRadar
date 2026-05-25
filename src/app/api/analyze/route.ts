@@ -16,15 +16,17 @@ export async function POST(_req: NextRequest) {
     return NextResponse.json({ error: 'Database error' }, { status: 500 })
   }
 
-  const [profileSetting, providerSetting, modelSetting] = await Promise.all([
+  const [profileSetting, providerSetting, modelSetting, thresholdSetting] = await Promise.all([
     prisma.setting.findUnique({ where: { key: 'ENGINEER_PROFILE' } }),
     prisma.setting.findUnique({ where: { key: 'AI_PROVIDER' } }),
     prisma.setting.findUnique({ where: { key: 'AI_MODEL' } }),
+    prisma.setting.findUnique({ where: { key: 'LEAD_THRESHOLD' } }),
   ])
   const engineerProfile = profileSetting?.value ?? ''
   const aiProvider = providerSetting?.value ?? 'openai'
   const aiModel = modelSetting?.value ?? 'gpt-4o'
-  console.log(`[analyze] Provider: ${aiProvider}, Model: ${aiModel}`)
+  const leadThreshold = parseInt(thresholdSetting?.value ?? '70', 10)
+  console.log(`[analyze] Provider: ${aiProvider}, Model: ${aiModel}, Threshold: ${leadThreshold}`)
 
   console.log(`[analyze] ${unanalyzed.length} posts to analyze`)
 
@@ -34,9 +36,19 @@ export async function POST(_req: NextRequest) {
     try {
       const result = await analyzePost(post.title, post.body, engineerProfile, aiProvider, aiModel)
       console.log(`[analyze] → score ${result.matchScore} — ${result.summary}`)
-      await prisma.extractedSignal.create({
-        data: {
-          postId: post.id,
+      await prisma.extractedSignal.upsert({
+        where: { postId: post.id },
+        create: {
+          post: { connect: { id: post.id } },
+          technologies: result.technologies,
+          painPoints: result.painPoints,
+          seniority: result.seniority,
+          remote: result.remote,
+          startupStage: result.startupStage,
+          matchScore: result.matchScore,
+          summary: result.summary,
+        },
+        update: {
           technologies: result.technologies,
           painPoints: result.painPoints,
           seniority: result.seniority,
@@ -46,6 +58,16 @@ export async function POST(_req: NextRequest) {
           summary: result.summary,
         },
       })
+
+      if (result.matchScore >= leadThreshold) {
+        await prisma.lead.upsert({
+          where: { postId: post.id },
+          create: { postId: post.id },
+          update: {},
+        })
+        console.log(`[analyze] → lead auto-created (score ${result.matchScore} >= ${leadThreshold})`)
+      }
+
       analyzed++
     } catch (err) {
       console.error(`Failed to analyze post ${post.id}:`, err)

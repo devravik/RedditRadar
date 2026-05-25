@@ -45,6 +45,14 @@ export default function SettingsHubPage() {
           <h2 className="font-semibold text-base">AI Provider</h2>
           <p className="text-sm text-gray-500 mt-1">Switch between OpenAI, OpenRouter, or Groq for analysis</p>
         </Link>
+
+        <Link
+          href="/settings/lead-threshold"
+          className="block bg-white border rounded-lg p-5 hover:border-gray-400 transition-colors"
+        >
+          <h2 className="font-semibold text-base">Lead Threshold</h2>
+          <p className="text-sm text-gray-500 mt-1">Minimum AI score to auto-create a lead from a post</p>
+        </Link>
       </div>
     </div>
   )
