@@ -29,21 +29,38 @@ export async function POST(_req: NextRequest) {
   console.log(`[analyze] Provider: ${aiProvider}, Model: ${aiModel}, Threshold: ${leadThreshold}`)
 
   const toAnalyze: typeof unanalyzed = []
-  const preFiltered: { title: string; reason: string }[] = []
+  let preFiltered = 0
 
   for (const post of unanalyzed) {
     const check = shouldSkipPost(post.title, post.body, post.score, post.numComments)
     if (check.skip) {
-      preFiltered.push({ title: post.title, reason: check.reason! })
+      preFiltered++
+      await prisma.extractedSignal.upsert({
+        where: { postId: post.id },
+        create: {
+          post: { connect: { id: post.id } },
+          technologies: [],
+          painPoints: [],
+          seniority: 'unknown',
+          remote: false,
+          startupStage: 'unknown',
+          matchScore: 0,
+          summary: `Pre-filtered: ${check.reason}`,
+        },
+        update: {
+          matchScore: 0,
+          summary: `Pre-filtered: ${check.reason}`,
+        },
+      })
     } else {
       toAnalyze.push(post)
     }
   }
 
-  if (preFiltered.length > 0) {
-    console.log(`[analyze] Pre-filtered ${preFiltered.length} posts:`, preFiltered.map(p => `${p.reason}: "${p.title.slice(0, 50)}"`).join(', '))
+  if (preFiltered > 0) {
+    console.log(`[analyze] Pre-filtered ${preFiltered} posts`)
   }
-  console.log(`[analyze] ${toAnalyze.length} to analyze, ${preFiltered.length} pre-filtered`)
+  console.log(`[analyze] ${toAnalyze.length} to analyze, ${preFiltered} pre-filtered`)
 
   let analyzed = 0
   for (const post of toAnalyze) {
@@ -83,6 +100,6 @@ export async function POST(_req: NextRequest) {
     }
   }
 
-  console.log(`[analyze] Done - ${analyzed}/${toAnalyze.length} analyzed, ${preFiltered.length} pre-filtered`)
-  return NextResponse.json({ analyzed, preFiltered: preFiltered.length })
+  console.log(`[analyze] Done - ${analyzed}/${toAnalyze.length} analyzed, ${preFiltered} pre-filtered`)
+  return NextResponse.json({ analyzed, preFiltered })
 }

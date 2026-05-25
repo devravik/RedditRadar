@@ -22,11 +22,6 @@ export async function POST(
     return NextResponse.json({ error: 'Post already analyzed' }, { status: 409 })
   }
 
-  const skip = shouldSkipPost(post.title, post.body, post.score, post.numComments)
-  if (skip.skip) {
-    return NextResponse.json({ error: `Pre-filtered: ${skip.reason}`, preFiltered: true, reason: skip.reason }, { status: 422 })
-  }
-
   const [profileSetting, providerSetting, modelSetting, thresholdSetting] = await Promise.all([
     prisma.setting.findUnique({ where: { key: 'ENGINEER_PROFILE' } }),
     prisma.setting.findUnique({ where: { key: 'AI_PROVIDER' } }),
@@ -37,6 +32,28 @@ export async function POST(
   const aiProvider = providerSetting?.value ?? 'openai'
   const aiModel = modelSetting?.value ?? 'gpt-4o'
   const leadThreshold = parseInt(thresholdSetting?.value ?? '70', 10)
+
+  const skip = shouldSkipPost(post.title, post.body, post.score, post.numComments)
+  if (skip.skip) {
+    const signal = await prisma.extractedSignal.upsert({
+      where: { postId: post.id },
+      create: {
+        post: { connect: { id: post.id } },
+        technologies: [],
+        painPoints: [],
+        seniority: 'unknown',
+        remote: false,
+        startupStage: 'unknown',
+        matchScore: 0,
+        summary: `Pre-filtered: ${skip.reason}`,
+      },
+      update: {
+        matchScore: 0,
+        summary: `Pre-filtered: ${skip.reason}`,
+      },
+    })
+    return NextResponse.json({ signal, preFiltered: true, reason: skip.reason })
+  }
 
   try {
     const result = await analyzePost(post.title, post.body, engineerProfile, aiProvider, aiModel)

@@ -38,6 +38,23 @@ export async function POST(req: NextRequest) {
     const skip = shouldSkipPost(post.title, post.body, post.score, post.numComments)
     if (skip.skip) {
       preFiltered++
+      await prisma.extractedSignal.upsert({
+        where: { postId: post.id },
+        create: {
+          post: { connect: { id: post.id } },
+          technologies: [],
+          painPoints: [],
+          seniority: 'unknown',
+          remote: false,
+          startupStage: 'unknown',
+          matchScore: 0,
+          summary: `Pre-filtered: ${skip.reason}`,
+        },
+        update: {
+          matchScore: 0,
+          summary: `Pre-filtered: ${skip.reason}`,
+        },
+      })
       continue
     }
 

@@ -18,38 +18,21 @@ export function AnalyzePostButton({
     setLoading(true)
     try {
       const res = await fetch(`/api/analyze/${postId}`, { method: 'POST' })
+      const body = await res.json()
       if (!res.ok) {
-        const body = await res.json()
-        if (body.preFiltered) {
-          Swal.fire({
-            icon: 'info',
-            title: 'Skipped',
-            text: 'Pre-filter classified this post as not a relevant opportunity.',
-            toast: true,
-            position: 'top-end',
-            timer: 3000,
-            showConfirmButton: false,
-          })
-        } else {
-          Swal.fire({
-            icon: 'error',
-            title: 'Analysis failed',
-            toast: true,
-            position: 'top-end',
-            timer: 3000,
-            showConfirmButton: false,
-          })
-        }
+        Swal.fire({
+          icon: 'error',
+          title: 'Analysis failed',
+          toast: true,
+          position: 'top-end',
+          timer: 3000,
+          showConfirmButton: false,
+        })
         return
       }
-      Swal.fire({
-        icon: 'success',
-        title: 'Analysis complete',
-        toast: true,
-        position: 'top-end',
-        timer: 2500,
-        showConfirmButton: false,
-      })
+      const icon = body.preFiltered ? 'info' as const : 'success' as const
+      const title = body.preFiltered ? 'Skipped (pre-filter)' : 'Analysis complete'
+      Swal.fire({ icon, title, toast: true, position: 'top-end', timer: 2500, showConfirmButton: false })
       router.refresh()
     } catch {
       Swal.fire({
