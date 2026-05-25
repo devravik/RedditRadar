@@ -136,6 +136,17 @@ npx prisma db seed  # Re-seed the database
 
 ---
 
+## Maintainer
+
+**Ravi K Gupta**
+
+- Website: [devravik.github.io](https://devravik.github.io)
+- Email: [dev.ravikgupt@gmail.com](mailto:dev.ravikgupt@gmail.com)
+- LinkedIn: [linkedin.com/in/ravi-k-dev](https://linkedin.com/in/ravi-k-dev)
+- GitHub: [github.com/devravik](https://github.com/devravik)
+
+---
+
 ## License
 
 [MIT](LICENSE)
